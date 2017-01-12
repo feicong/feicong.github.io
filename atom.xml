@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>fEICOnG&#39;s Blog</title>
+  <subtitle>RE makes life easier</subtitle>
+  <link href="/atom.xml" rel="self"/>
+  
+  <link href="https://feicong.github.io/"/>
+  <updated>2017-01-12T03:27:05.000Z</updated>
+  <id>https://feicong.github.io/</id>
+  
+  <author>
+    <name>John Doe</name>
+    
+  </author>
+  
+  <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>macOS平台软件的下载与安装</title>
+    <link href="https://feicong.github.io/2017/01/12/install-software/"/>
+    <id>https://feicong.github.io/2017/01/12/install-software/</id>
+    <published>2017-01-12T03:27:10.000Z</published>
+    <updated>2017-01-12T03:27:05.000Z</updated>
+    
+    <summary type="html">
+    
+      &lt;p&gt;对于一个操作系统来说，对其影响最大的莫过于运行在它上面的软件，正因为这些形形色色软件的存在，操作系统才得以广泛应用。与Linux、Windows等主流操作系统一样，运行在macOS上的软件也有着自己独有的特点。&lt;/p&gt;
+&lt;p&gt;macOS上的软件有着自己独特的UI界面与操作方
+    
+    </summary>
+    
+    
+      <category term="macOS软件安全" scheme="https://feicong.github.io/tags/macOS%E8%BD%AF%E4%BB%B6%E5%AE%89%E5%85%A8/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>macOS软件安全系列-软件内幕篇</title>
+    <link href="https://feicong.github.io/2017/01/12/macos-software/"/>
+    <id>https://feicong.github.io/2017/01/12/macos-software/</id>
+    <published>2017-01-12T02:20:31.000Z</published>
+    <updated>2017-01-12T02:54:28.000Z</updated>
+    
+    <summary type="html">
+    
+      &lt;p&gt;macOS平台上的软件安全话题讨论在国内仍是软件安全领域的沼泽地带，除了在部分安全论坛上见过几篇破解分析的文章外，鲜有人问津。&lt;/p&gt;
+&lt;p&gt;如今，macOS平台的安全问题已经被越来越多的人关注，本系列的文章为macOS软件安全系列的一个篇章－软件内幕篇，探讨macOS系统
+    
+    </summary>
+    
+    
+      <category term="macOS软件安全" scheme="https://feicong.github.io/tags/macOS%E8%BD%AF%E4%BB%B6%E5%AE%89%E5%85%A8/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>新的篇章</title>
+    <link href="https://feicong.github.io/2017/01/11/new-chapter/"/>
+    <id>https://feicong.github.io/2017/01/11/new-chapter/</id>
+    <published>2017-01-11T05:56:48.000Z</published>
+    <updated>2017-01-11T06:34:15.000Z</updated>
+    
+    <summary type="html">
+    
+      &lt;p&gt;欢迎来到 &lt;a href=&quot;https://feicong.github.io/&quot;&gt;非虫的博客&lt;/a&gt;! 自从12年放弃百度空间后，再没写过博客了。&lt;/p&gt;
+&lt;p&gt;新的一年，新的篇章，非虫的博客全新开启，以此记录生活点滴，同时作为自己技术分享的平台，希望你会喜欢！&lt;/p&gt;
+
+    
+    </summary>
+    
+    
+  </entry>
+  
+</feed>
