@@ -68,7 +68,7 @@
     <article id="post-install-software" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/2017/01/12/install-software/" class="article-date">
-  <time datetime="2017-01-12T02:55:17.000Z" itemprop="datePublished">2017-01-12</time>
+  <time datetime="2017-01-12T03:27:10.000Z" itemprop="datePublished">2017-01-12</time>
 </a>
     
   </div>
@@ -89,7 +89,7 @@
       
         <p>对于一个操作系统来说，对其影响最大的莫过于运行在它上面的软件，正因为这些形形色色软件的存在，操作系统才得以广泛应用。与Linux、Windows等主流操作系统一样，运行在macOS上的软件也有着自己独有的特点。</p>
 <p>macOS上的软件有着自己独特的UI界面与操作方式。macOS的设计师一直秉承着自己的设计理念，设计出的Aqua界面别具风格。银灰的金属色主题始终是分辨macOS系统最快捷的一种方式，与Windows界面将最小按钮与关闭按钮设置到窗口右上角不同，Aqua界面的程序，最小化与关闭按钮位于软件的左上角，并且使用全屏按钮替换了Windows上的最大化按钮。进入全屏模式下的软件会新开一个窗口并占据屏幕的全部空间，可以在触摸板上使用三根手指左右划动来切换不同的全屏窗口。</p>
-<p>每个常规的Aqua界面的程序都有一个菜单，菜单显示在用户屏幕的顶端，菜单的最左边始终是一个苹果图标，点击它会弹出系统设置、<code>App Store</code>、关机、重启等多个选项。<br>macOS使用Dock栏来管理显示常用的软件，它位于用户屏幕的底部，展示效果与Windows的任务栏相似，正在运行的macOS界面程序，都可以在Dock上右键点击该程序，在弹出的菜单中选择Options-&gt;Keep in Dock，将程序在Dock上保留下来，以后就可以直接从Dock中单击图标启动程序。<br>在Windows系统中，用户可以使用开始菜单-&gt;所有程序来找到系统中安装的软件并启动它，macOS中则提供了一个<code>Launchpad</code>程序来管理安装在/Applications目录中的软件。<code>Launchpad</code>移植于iOS系统中的<code>SpringBoard</code>，展示的效果也与之类似，它以全屏网格形式的界面显示了所有可以运行的软件与系统工具，如果软件安装过多，会以多个页面来展示。点击Dock上的<code>Launchpad</code>图标可以启动它，如图所示：<br><img src="imgs/install-software/launchpad.png" alt="launchpad"><br>使用二根手指左右划动可以在不同的页面间切换。</p>
+<p>每个常规的Aqua界面的程序都有一个菜单，菜单显示在用户屏幕的顶端，菜单的最左边始终是一个苹果图标，点击它会弹出系统设置、<code>App Store</code>、关机、重启等多个选项。<br>macOS使用Dock栏来管理显示常用的软件，它位于用户屏幕的底部，展示效果与Windows的任务栏相似，正在运行的macOS界面程序，都可以在Dock上右键点击该程序，在弹出的菜单中选择Options-&gt;Keep in Dock，将程序在Dock上保留下来，以后就可以直接从Dock中单击图标启动程序。<br>在Windows系统中，用户可以使用开始菜单-&gt;所有程序来找到系统中安装的软件并启动它，macOS中则提供了一个<code>Launchpad</code>程序来管理安装在/Applications目录中的软件。<code>Launchpad</code>移植于iOS系统中的<code>SpringBoard</code>，展示的效果也与之类似，它以全屏网格形式的界面显示了所有可以运行的软件与系统工具，如果软件安装过多，会以多个页面来展示。点击Dock上的<code>Launchpad</code>图标可以启动它，如图所示：<br><img src="/2017/01/12/install-software/launchpad.png" alt="launchpad"><br>使用二根手指左右划动可以在不同的页面间切换。</p>
 <h3 id="0x0-可执行文件"><a href="#0x0-可执行文件" class="headerlink" title="0x0 可执行文件"></a>0x0 可执行文件</h3><p>除了Aqua界面的程序，macOS上还可以运行很多其它种类的文件，这里将所有可以运行在macOS系统上文件的统称为macOS可执行文件。</p>
 <p>首先是脚本，macOS提供了UNIX系统中的Shell环境来支持运行脚本与命令行程序，脚本实质是一个文本文件，在脚本文件中指定运行它解释器后，Shell在运行脚本时，会调用解释器来解释运行它，任何一个文件都可以通过执行”chmod +x”命令给它加上可执行权限，拥有可执行权限的文件并不一定能执行，它必须是能满足某种解释器的语法规则才算得上可执行文件。<br>除了主流的几种Shell脚本支持外，macOS还内置了目前比较流行的<code>Perl</code>、<code>Python</code>和<code>Ruby</code>等脚本的解释器，任何人都可以直接编写<code>Perl</code>、<code>Python</code>和<code>Ruby</code>脚本并调用它们的解释器来运行，而不需要安装额外的软件。</p>
 <p>另外，苹果公司还开发了一种脚本：AppleScript（苹果脚本）。它的作用是用于运行在macOS的程序并实际自动化工作的。苹果提供了一个单独的脚本编辑器来开发与调试AppleScript。它位于/Applications/Ｕtilities/Script Editor。使用<code>Script Editor</code>编写好的脚本保存的格式为scpt。随着macOS系统的不断升级，<code>AppleScript</code>也在不停的发展，目前甚至可以使用<code>AppleScript</code>来开发macOS上的界面程序。具体的步骤是在XCode中选择File-&gt;New-&gt;Project，在打开的对话框中选择Other-&gt;Cocoa-AppleScript。有兴趣的读者可以参看苹果的官方文档来深入了解AppleScript，地址上：<a href="https://developer.apple.com/library/mac/documentation/AppleScript/Conceptual/AppleScriptX/AppleScriptX.html" target="_blank" rel="external">https://developer.apple.com/library/mac/documentation/AppleScript/Conceptual/AppleScriptX/AppleScriptX.html</a> 。</p>
@@ -97,11 +97,11 @@
 <h3 id="0x1-下载与安装软件"><a href="#0x1-下载与安装软件" class="headerlink" title="0x1 下载与安装软件"></a>0x1 下载与安装软件</h3><p>苹果支持从自家的<code>App Store</code>应用商店直接安装软件，也支持从第三方渠道，如其它磁盘介质、网络下载来安装软件。从<code>App Store</code>下载软件是最方便快捷，也是最安全的一种方式，苹果公司一向以软件审查严格闻名，自家商店中的应用软件在界面、功能以及对系统资源的使用上，都是经常严格审查与限制的，对于普通用户来说，这种下载软件的方式最合适不过了，但对于专业用户来说，由于一些专业软件在用户授权协议、资源访问上或其它方面的原因未能在<code>App Store</code>上架，就只能从网络或第三方渠道来获取这类软件了。</p>
 <h4 id="0x1-1-免费与付费软件"><a href="#0x1-1-免费与付费软件" class="headerlink" title="0x1.1 免费与付费软件"></a>0x1.1 免费与付费软件</h4><p><code>App Store</code>应用商店上提供了丰富的免费与付费的软件供用户下载使用。下载免费的软件不需要用户付出额外的成本，只需要到官网<a href="https://appleid.apple.com/" target="_blank" rel="external">https://appleid.apple.com/</a> 注册一个的帐号，使用帐号登录<code>App Store</code>就可以下载上面的免费软件了。<br>如果要下载<code>App Store</code>上面的收费软件，需要为帐号绑定一张银行卡，购买软件成功后会直接从银行卡中扣取费用。另外，<code>App Store</code>中的软件还支持另一种收费方式：<code>In-App Purchase</code>（应用内付费），简称IAP，这种收费方式在苹果自家的iOS系统中应用非常广泛，它允许开发人员为自己的软件某些特定功能设定为需要购买才能使用，目前，很多软件开发商以此平台作为主要的软件收入来源。</p>
 <p><code>App Store</code>中的收费软件只有IAP与直接购买这两种方式，而网络下载的收费软件的付费形式则丰富很多。部分软件官网只提供软件基础功能的演示版本供用户下载，如果需要使用正式版本，则需要联系软件开发商购买完整版本。例如著名的反汇编软件<code>IDA Pro</code>，官网就只提供了Demo版本可供下载：<a href="https://www.hex-rays.com/products/ida/support/download_demo.shtml" target="_blank" rel="external">https://www.hex-rays.com/products/ida/support/download_demo.shtml</a> ，正式版本需要找软件开发商或代理商购买。也有些软件的官网会提供完整版本下载，但会有使用时间或功能限制，如果需要正常无限制使用软件，则需要购买软件授权，如反汇编软件<code>Hopper</code>（<a href="http://hopperapp.com/）。还有部分软件与传统Window付费软件一样，使用用户名与注册码的形式来售卖软件，如`010" target="_blank" rel="external">http://hopperapp.com/）。还有部分软件与传统Window付费软件一样，使用用户名与注册码的形式来售卖软件，如`010</a> Editor`（<a href="http://www.sweetscape.com/010editor/）。" target="_blank" rel="external">http://www.sweetscape.com/010editor/）。</a></p>
-<h4 id="0x1-2-安装软件"><a href="#0x1-2-安装软件" class="headerlink" title="0x1.2 安装软件"></a>0x1.2 安装软件</h4><p>普通的macOS软件只是一个以扩展名.app结尾的目录，这种目录有着特定的组织结构，macOS将它称之为Bundle，安装这类软件只需要将Bundle复制到系统的/Applications目录即可，复制完成后，<code>Launchpad</code>面板会自动更新安装好的软件图标，启动软件不需要到/Applications目录中去寻找它，只需要打开<code>Launchpad</code>，找到软件的图标并点击就可以运行该程序了。<br>从网络上下载的软件通常是经过打包后发布的，普通的软件多是zip或其它方式压缩后，以压缩包的形式提供下载，还有的使用磁盘工具将软件打包成一个dmg磁盘镜像文件，这类dmg文件内通常还会有一个Applications目录的软链接，安装的时候，只需要将dmg中的软件直接拖放到该软链接上就算完成安装了。如图所示，是<code>AppDelete</code>的安装镜像：<br><img src="imgs/install-software/install_app.png" alt="install_app"></p>
+<h4 id="0x1-2-安装软件"><a href="#0x1-2-安装软件" class="headerlink" title="0x1.2 安装软件"></a>0x1.2 安装软件</h4><p>普通的macOS软件只是一个以扩展名.app结尾的目录，这种目录有着特定的组织结构，macOS将它称之为Bundle，安装这类软件只需要将Bundle复制到系统的/Applications目录即可，复制完成后，<code>Launchpad</code>面板会自动更新安装好的软件图标，启动软件不需要到/Applications目录中去寻找它，只需要打开<code>Launchpad</code>，找到软件的图标并点击就可以运行该程序了。<br>从网络上下载的软件通常是经过打包后发布的，普通的软件多是zip或其它方式压缩后，以压缩包的形式提供下载，还有的使用磁盘工具将软件打包成一个dmg磁盘镜像文件，这类dmg文件内通常还会有一个Applications目录的软链接，安装的时候，只需要将dmg中的软件直接拖放到该软链接上就算完成安装了。如图所示，是<code>AppDelete</code>的安装镜像：<br><img src="/2017/01/12/install-software/install_app.png" alt="install_app"></p>
 <p>macOS上的软件还有一种是以pkg或mpkg结尾的安装包，类似于Windows系统上的msi或exe安装程序，通过不停的点击下一步就可以完成安装，这类软件除了将主程序写入/Applications目录外，一般还会在系统上做一些只有管理员权限才能完成的动作，比如为特定的目录或文件创建软链接、安装与卸载内核扩展、复制命令行程序到用户可执行文件目录/usr/local/bin中等。因此，在安装的过程中，可能会提示输入管理员用户名与密码来执行需要Root权限的操作。</p>
 <p>另一种是命令行工具，这类程序的安装使用第一章中介绍的<code>Homebrew</code>即可，此处不再赘述。</p>
 <h3 id="0x3-Bundle"><a href="#0x3-Bundle" class="headerlink" title="0x3 Bundle"></a>0x3 Bundle</h3><p>Bundle是苹果系统独有的特色，在苹果系统上大量中使用了Bundle。</p>
-<h4 id="0x3-1-Bundle目录结构"><a href="#0x3-1-Bundle目录结构" class="headerlink" title="0x3.1 Bundle目录结构"></a>0x3.1 Bundle目录结构</h4><p>安装到macOS系统上的软件有着自己特定的格式，它们是以.app扩展名结尾的Bundle目录结构。Bundle有着固定的组织格式，在Finder中查看Bundle的目录内容，可以在程序上点右键，在弹出的菜单中选择Show Package Contents，查看Bundle的目录结构。以/Applications目录下<code>App Store</code>为例，它的目录结构如图所示：<br><img src="imgs/install-software/bundle.png" alt="bundle"></p>
+<h4 id="0x3-1-Bundle目录结构"><a href="#0x3-1-Bundle目录结构" class="headerlink" title="0x3.1 Bundle目录结构"></a>0x3.1 Bundle目录结构</h4><p>安装到macOS系统上的软件有着自己特定的格式，它们是以.app扩展名结尾的Bundle目录结构。Bundle有着固定的组织格式，在Finder中查看Bundle的目录内容，可以在程序上点右键，在弹出的菜单中选择Show Package Contents，查看Bundle的目录结构。以/Applications目录下<code>App Store</code>为例，它的目录结构如图所示：<br><img src="/2017/01/12/install-software/bundle.png" alt="bundle"></p>
 <p>在App Store.app目录下，只有一个Contents子目录，所有软件的内容都在此目录下。它们包括：</p>
 <ul>
 <li>CodeSignature目录。此目录下只有一个CodeResources文件，它是一个plist格式的文件，保存了软件包中所有文件的签名信息。</li>
@@ -121,7 +121,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://feicong.github.io/2017/01/12/install-software/" data-id="cixtssamn0000ksvjwayh4nqy" class="article-share-link">Share</a>
+      <a data-url="https://feicong.github.io/2017/01/12/install-software/" data-id="cixtszuhe0000q2vjqmnvt0mk" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/macOS软件安全/">macOS软件安全</a></li></ul>
@@ -162,7 +162,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://feicong.github.io/2017/01/12/macos-software/" data-id="cixtssams0001ksvjs3jnhq6k" class="article-share-link">Share</a>
+      <a data-url="https://feicong.github.io/2017/01/12/macos-software/" data-id="cixtszuhi0001q2vjxgevvufk" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/macOS软件安全/">macOS软件安全</a></li></ul>
@@ -202,7 +202,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://feicong.github.io/2017/01/11/new-chapter/" data-id="cixtssamx0003ksvjf12h7p9g" class="article-share-link">Share</a>
+      <a data-url="https://feicong.github.io/2017/01/11/new-chapter/" data-id="cixtszuhn0003q2vjbrchihcs" class="article-share-link">Share</a>
       
       
     </footer>
