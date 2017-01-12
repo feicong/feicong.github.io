@@ -3,21 +3,24 @@
 <head>
   <meta charset="utf-8">
   
-  <title>macOS软件安全系列 | fEICOnG&#39;s Blog</title>
+  <title>macOS软件安全系列-软件内幕篇 | fEICOnG&#39;s Blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="macOS软件安全系列-软件内幕篇macOS平台上的软件安全话题讨论在国内仍是软件安全领域的沼泽地带，除了在部分安全论坛上见过几篇破解分析的文章外，鲜有人问津。
-如今，macOS平台的安全问题已经被越来越多的人关注，本系列的文章为macOS软件安全系列的一个篇章－软件内幕篇，探讨macOS系统上常见的文件格式与它们的管理方式，让各位关注软件安全领域的朋友，对macOS系统上的软件安全有直观的认识。">
+  <meta name="description" content="macOS平台上的软件安全话题讨论在国内仍是软件安全领域的沼泽地带，除了在部分安全论坛上见过几篇破解分析的文章外，鲜有人问津。
+如今，macOS平台的安全问题已经被越来越多的人关注，本系列的文章为macOS软件安全系列的一个篇章－软件内幕篇，探讨macOS系统上常见的文件格式与它们的管理方式，让各位关注软件安全领域的朋友，对macOS系统上的软件安全有直观的认识。
+声明本系列文章为非虫（微信：fe">
 <meta property="og:type" content="article">
-<meta property="og:title" content="macOS软件安全系列">
+<meta property="og:title" content="macOS软件安全系列-软件内幕篇">
 <meta property="og:url" content="https://feicong.github.io/2017/01/12/macos-software/index.html">
 <meta property="og:site_name" content="fEICOnG's Blog">
-<meta property="og:description" content="macOS软件安全系列-软件内幕篇macOS平台上的软件安全话题讨论在国内仍是软件安全领域的沼泽地带，除了在部分安全论坛上见过几篇破解分析的文章外，鲜有人问津。
-如今，macOS平台的安全问题已经被越来越多的人关注，本系列的文章为macOS软件安全系列的一个篇章－软件内幕篇，探讨macOS系统上常见的文件格式与它们的管理方式，让各位关注软件安全领域的朋友，对macOS系统上的软件安全有直观的认识。">
-<meta property="og:updated_time" content="2017-01-12T02:47:30.000Z">
+<meta property="og:description" content="macOS平台上的软件安全话题讨论在国内仍是软件安全领域的沼泽地带，除了在部分安全论坛上见过几篇破解分析的文章外，鲜有人问津。
+如今，macOS平台的安全问题已经被越来越多的人关注，本系列的文章为macOS软件安全系列的一个篇章－软件内幕篇，探讨macOS系统上常见的文件格式与它们的管理方式，让各位关注软件安全领域的朋友，对macOS系统上的软件安全有直观的认识。
+声明本系列文章为非虫（微信：fe">
+<meta property="og:updated_time" content="2017-01-12T02:49:58.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="macOS软件安全系列">
-<meta name="twitter:description" content="macOS软件安全系列-软件内幕篇macOS平台上的软件安全话题讨论在国内仍是软件安全领域的沼泽地带，除了在部分安全论坛上见过几篇破解分析的文章外，鲜有人问津。
-如今，macOS平台的安全问题已经被越来越多的人关注，本系列的文章为macOS软件安全系列的一个篇章－软件内幕篇，探讨macOS系统上常见的文件格式与它们的管理方式，让各位关注软件安全领域的朋友，对macOS系统上的软件安全有直观的认识。">
+<meta name="twitter:title" content="macOS软件安全系列-软件内幕篇">
+<meta name="twitter:description" content="macOS平台上的软件安全话题讨论在国内仍是软件安全领域的沼泽地带，除了在部分安全论坛上见过几篇破解分析的文章外，鲜有人问津。
+如今，macOS平台的安全问题已经被越来越多的人关注，本系列的文章为macOS软件安全系列的一个篇章－软件内幕篇，探讨macOS系统上常见的文件格式与它们的管理方式，让各位关注软件安全领域的朋友，对macOS系统上的软件安全有直观的认识。
+声明本系列文章为非虫（微信：fe">
   
     <link rel="alternate" href="/atom.xml" title="fEICOnG&#39;s Blog" type="application/atom+xml">
   
@@ -84,7 +87,7 @@
         
   
     <h1 class="article-title" itemprop="name">
-      macOS软件安全系列
+      macOS软件安全系列-软件内幕篇
     </h1>
   
 
@@ -92,14 +95,14 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h2 id="macOS软件安全系列-软件内幕篇"><a href="#macOS软件安全系列-软件内幕篇" class="headerlink" title="macOS软件安全系列-软件内幕篇"></a>macOS软件安全系列-软件内幕篇</h2><p>macOS平台上的软件安全话题讨论在国内仍是软件安全领域的沼泽地带，除了在部分安全论坛上见过几篇破解分析的文章外，鲜有人问津。</p>
+        <p>macOS平台上的软件安全话题讨论在国内仍是软件安全领域的沼泽地带，除了在部分安全论坛上见过几篇破解分析的文章外，鲜有人问津。</p>
 <p>如今，macOS平台的安全问题已经被越来越多的人关注，本系列的文章为macOS软件安全系列的一个篇章－软件内幕篇，探讨macOS系统上常见的文件格式与它们的管理方式，让各位关注软件安全领域的朋友，对macOS系统上的软件安全有直观的认识。</p>
 <h3 id="声明"><a href="#声明" class="headerlink" title="声明"></a>声明</h3><p>本系列文章为非虫（微信：feicongcn）原创，任何个人与组织未经允许，不得转载与摘抄，否则，作者保留一切追究法律责任的权利。</p>
 <h3 id="软件的下载与安装"><a href="#软件的下载与安装" class="headerlink" title="软件的下载与安装"></a><a href="https://feicong.github.io/2017/01/12/install-software/">软件的下载与安装</a></h3><h3 id="Mach-O文件格式"><a href="#Mach-O文件格式" class="headerlink" title="Mach-O文件格式"></a><a href="https://feicong.github.io/2017/01/13/macho/">Mach-O文件格式</a></h3><h3 id="动态库加载过程分析"><a href="#动态库加载过程分析" class="headerlink" title="动态库加载过程分析"></a><a href="https://feicong.github.io/2017/01/14/dylib/">动态库加载过程分析</a></h3><h3 id="静态库的管理与文件格式分析"><a href="#静态库的管理与文件格式分析" class="headerlink" title="静态库的管理与文件格式分析"></a><a href="https://feicong.github.io/2017/01/15/staticlib/">静态库的管理与文件格式分析</a></h3><h3 id="PKG安装包的管理与文件格式分析"><a href="#PKG安装包的管理与文件格式分析" class="headerlink" title="PKG安装包的管理与文件格式分析"></a><a href="https://feicong.github.io/2017/01/16/pkg/">PKG安装包的管理与文件格式分析</a></h3><h3 id="DMG文件管理"><a href="#DMG文件管理" class="headerlink" title="DMG文件管理"></a><a href="https://feicong.github.io/2017/01/17/dmg/">DMG文件管理</a></h3>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://feicong.github.io/2017/01/12/macos-software/" data-id="cixtrzsh70000cnvj1ztwc01o" class="article-share-link">Share</a>
+      <a data-url="https://feicong.github.io/2017/01/12/macos-software/" data-id="cixts1u0z0000nvvjaue43wrh" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/macOS-逆向工程-逆向分析/">macOS;逆向工程;逆向分析</a></li></ul>
@@ -164,7 +167,7 @@
       <ul>
         
           <li>
-            <a href="/2017/01/12/macos-software/">macOS软件安全系列</a>
+            <a href="/2017/01/12/macos-software/">macOS软件安全系列-软件内幕篇</a>
           </li>
         
           <li>
