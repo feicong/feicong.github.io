@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://feicong.github.io/"/>
-  <updated>2017-01-12T03:27:05.000Z</updated>
+  <updated>2017-01-13T01:26:12.000Z</updated>
   <id>https://feicong.github.io/</id>
   
   <author>
@@ -14,6 +14,24 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Mach-O文件格式</title>
+    <link href="https://feicong.github.io/2017/01/13/macho/"/>
+    <id>https://feicong.github.io/2017/01/13/macho/</id>
+    <published>2017-01-13T01:03:08.000Z</published>
+    <updated>2017-01-13T01:26:12.000Z</updated>
+    
+    <summary type="html">
+    
+      &lt;h2 id=&quot;0x1-通用二进制格式&quot;&gt;&lt;a href=&quot;#0x1-通用二进制格式&quot; class=&quot;headerlink&quot; title=&quot;0x1 通用二进制格式&quot;&gt;&lt;/a&gt;0x1 通用二进制格式&lt;/h2&gt;&lt;p&gt;虽然macOS系统使用了很多UNIX上的特性，但它并没有使用ELF作
+    
+    </summary>
+    
+    
+      <category term="macOS软件安全" scheme="https://feicong.github.io/tags/macOS%E8%BD%AF%E4%BB%B6%E5%AE%89%E5%85%A8/"/>
+    
+  </entry>
   
   <entry>
     <title>macOS平台软件的下载与安装</title>
