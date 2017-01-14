@@ -102,5 +102,5 @@ backup:
     type: git
     theme: coney,landscape
     repository:
-       github: https://github.com/feicong/feicong.github.io.git
-       gitcafe: https://github.com/feicong/feicong.github.io.git
+       github: https://github.com/feicong/feicong.github.io.git,backup
+       gitcafe: https://github.com/feicong/feicong.github.io.git,backup
