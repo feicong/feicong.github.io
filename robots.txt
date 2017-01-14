@@ -1,0 +1,9 @@
+User-agent: *
+Disallow: /vendors/
+Disallow: /js/
+Disallow: /css/
+Disallow: /fonts/
+Disallow: /vendors/
+Allow: /
+Allow: /archives/
+Sitemap: https://feicong.github.io/sitemap.xml
