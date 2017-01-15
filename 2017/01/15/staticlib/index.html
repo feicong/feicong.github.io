@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>静态库的管理与文件格式分析 | fEICOnG&#39;s Blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="静态库与动态库都属于Mach-O格式的文件，动态库使用.dylib作为文件的扩展名，静态库的扩展名则是.a；在功能上，动态库通过动态链接的方式向其它程序提供接口，而静态库则是将功能代码直接编译进目标Mach-O文件中去，多个程序使用同一个动态库并不会增加目标文件的大小，使用静态库则会将每份功能代码都拷贝到目标文件中；从运行效率上来说，动态库需要在加载后做符号绑定操作，而静态库代码直接在目标程序中运">
+<meta property="og:type" content="article">
+<meta property="og:title" content="静态库的管理与文件格式分析">
+<meta property="og:url" content="https://feicong.github.io/2017/01/15/staticlib/index.html">
+<meta property="og:site_name" content="fEICOnG's Blog">
+<meta property="og:description" content="静态库与动态库都属于Mach-O格式的文件，动态库使用.dylib作为文件的扩展名，静态库的扩展名则是.a；在功能上，动态库通过动态链接的方式向其它程序提供接口，而静态库则是将功能代码直接编译进目标Mach-O文件中去，多个程序使用同一个动态库并不会增加目标文件的大小，使用静态库则会将每份功能代码都拷贝到目标文件中；从运行效率上来说，动态库需要在加载后做符号绑定操作，而静态库代码直接在目标程序中运">
+<meta property="og:image" content="https://feicong.github.io/2017/01/15/staticlib/static_lib.png">
+<meta property="og:updated_time" content="2017-01-15T00:25:12.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="静态库的管理与文件格式分析">
+<meta name="twitter:description" content="静态库与动态库都属于Mach-O格式的文件，动态库使用.dylib作为文件的扩展名，静态库的扩展名则是.a；在功能上，动态库通过动态链接的方式向其它程序提供接口，而静态库则是将功能代码直接编译进目标Mach-O文件中去，多个程序使用同一个动态库并不会增加目标文件的大小，使用静态库则会将每份功能代码都拷贝到目标文件中；从运行效率上来说，动态库需要在加载后做符号绑定操作，而静态库代码直接在目标程序中运">
+<meta name="twitter:image" content="https://feicong.github.io/2017/01/15/staticlib/static_lib.png">
+  
+    <link rel="alternate" href="/atom.xml" title="fEICOnG&#39;s Blog" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">fEICOnG&#39;s Blog</a>
+      </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/" id="subtitle">RE makes life easier</a>
+        </h2>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="Flux RSS"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Rechercher"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://feicong.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-staticlib" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/01/15/staticlib/" class="article-date">
+  <time datetime="2017-01-15T00:21:06.000Z" itemprop="datePublished">2017-01-15</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      静态库的管理与文件格式分析
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>静态库与动态库都属于Mach-O格式的文件，动态库使用.dylib作为文件的扩展名，静态库的扩展名则是.a；在功能上，动态库通过动态链接的方式向其它程序提供接口，而静态库则是将功能代码直接编译进目标Mach-O文件中去，多个程序使用同一个动态库并不会增加目标文件的大小，使用静态库则会将每份功能代码都拷贝到目标文件中；从运行效率上来说，动态库需要在加载后做符号绑定操作，而静态库代码直接在目标程序中运行，理论上来讲，使用静态库的运行效率比动态库要高一些。</p>
+<h2 id="0x1-构建静态库"><a href="#0x1-构建静态库" class="headerlink" title="0x1 构建静态库"></a>0x1 构建静态库</h2><p><code>XCode</code>提供了创建静态库的工程模板，创建静态库的方法与创建动态库几乎一样，唯一不同的是，在项目设置时，Type选择Static。还是与创建动态库一样的代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">//mystaticlib.h</div><div class="line">#import &lt;Foundation/Foundation.h&gt;</div><div class="line"></div><div class="line">@interface mystaticlib : NSObject</div><div class="line">-(void) hello;</div><div class="line">@end</div><div class="line"></div><div class="line">//mystaticlib.m</div><div class="line">#import &quot;mystaticlib.h&quot;</div><div class="line"></div><div class="line">@implementation mystaticlib</div><div class="line">-(void) hello &#123;</div><div class="line">    NSLog(@&quot;hello world&quot;);</div><div class="line">&#125;</div><div class="line">@end</div></pre></td></tr></table></figure></p>
+<p>分别保存为mystaticlib.h与mystaticlib.m。然后使用xcodebuild编译会有如下输出：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">$ xcodebuild</div><div class="line">=== BUILD TARGET mystaticlib OF PROJECT mystaticlib WITH THE DEFAULT CONFIGURATION (Release) ===</div><div class="line"></div><div class="line">Check dependencies</div><div class="line"></div><div class="line">Write auxiliary files</div><div class="line">write-file /Users/macbook/Documents/macbook/macbook/code/chapter4/mystaticlib/build/mystaticlib.build/Release/mystaticlib.build/mystaticlib-generated-files.hmap</div><div class="line">write-file /Users/macbook/Documents/macbook/macbook/code/chapter4/mystaticlib/build/mystaticlib.build/Release/mystaticlib.build/mystaticlib-all-target-headers.hmap</div><div class="line">......</div><div class="line">/bin/mkdir -p /Users/macbook/Documents/macbook/macbook/code/chapter4/mystaticlib/build/mystaticlib.build/Release/mystaticlib.build/Objects-normal/x86_64</div><div class="line">write-file /Users/macbook/Documents/macbook/macbook/code/chapter4/mystaticlib/build/mystaticlib.build/Release/mystaticlib.build/Objects-normal/x86_64/mystaticlib.LinkFileList</div><div class="line"></div><div class="line">CompileC build/mystaticlib.build/Release/mystaticlib.build/Objects-normal/x86_64/mystaticlib.o mystaticlib/mystaticlib.m normal x86_64 objective-c com.apple.compilers.llvm.clang.1_0.compiler</div><div class="line">    cd /Users/macbook/Documents/macbook/macbook/code/chapter4/mystaticlib</div><div class="line">    export LANG=en_US.US-ASCII</div><div class="line">    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -x objective-c -arch x86_64 -fmessage-length=94 -fdiagnostics-show-note-include-stack -fmacro-backtrace-limit=0 -fcolor-diagnostics -std=gnu99 -fobjc-arc -fmodules -gmodules -fmodules-prune-interval=86400 -fmodules-prune-after=345600 -fbuild-session-file=/var/folders/rd/mts0362j0n92rq0z1cnmdb580000gn/C/org.llvm.clang/ModuleCache/Session.modulevalidation -fmodules-validate-once-per-build-session -Wnon-modular-include-in-framework-module -Werror=non-modular-include-in-framework-module -Wno-trigraphs -fpascal-strings -Os -fno-common -Wno-missing-field-initializers -Wno-missing-prototypes -Werror=return-type -Wunreachable-code -Wno-implicit-atomic-properties -Werror=deprecated-objc-isa-usage -Werror=objc-root-class -Wno-arc-repeated-use-of-weak -Wduplicate-method-match -Wno-missing-braces -Wparentheses -Wswitch -Wunused-function -Wno-unused-label -Wno-unused-parameter -Wunused-variable -Wunused-value -Wempty-body -Wconditional-uninitialized -Wno-unknown-pragmas -Wno-shadow -Wno-four-char-constants -Wno-conversion -Wconstant-conversion -Wint-conversion -Wbool-conversion -Wenum-conversion -Wshorten-64-to-32 -Wpointer-sign -Wno-newline-eof -Wno-selector -Wno-strict-selector-match -Wundeclared-selector -Wno-deprecated-implementations -DNS_BLOCK_ASSERTIONS=1 -DOBJC_OLD_DISPATCH_PROTOTYPES=0 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk -fasm-blocks -fstrict-aliasing -Wprotocol -Wdeprecated-declarations -mmacosx-version-min=10.11 -g -Wno-sign-conversion -iquote /Users/macbook/Documents/macbook/macbook/code/chapter4/mystaticlib/build/mystaticlib.build/Release/mystaticlib.build/mystaticlib-generated-files.hmap -I/Users/macbook/Documents/macbook/macbook/code/chapter4/mystaticlib/build/mystaticlib.build/Release/mystaticlib.build/mystaticlib-own-target-headers.hmap -I/Users/macbook/Documents/macbook/macbook/code/chapter4/mystaticlib/build/mystaticlib.build/Release/mystaticlib.build/mystaticlib-all-target-headers.hmap -iquote /Users/macbook/Documents/macbook/macbook/code/chapter4/mystaticlib/build/mystaticlib.build/Release/mystaticlib.build/mystaticlib-project-headers.hmap -I/Users/macbook/Documents/macbook/macbook/code/chapter4/mystaticlib/build/Release/include -I/Users/macbook/Documents/macbook/macbook/code/chapter4/mystaticlib/build/mystaticlib.build/Release/mystaticlib.build/DerivedSources/x86_64 -I/Users/macbook/Documents/macbook/macbook/code/chapter4/mystaticlib/build/mystaticlib.build/Release/mystaticlib.build/DerivedSources -F/Users/macbook/Documents/macbook/macbook/code/chapter4/mystaticlib/build/Release -MMD -MT dependencies -MF /Users/macbook/Documents/macbook/macbook/code/chapter4/mystaticlib/build/mystaticlib.build/Release/mystaticlib.build/Objects-normal/x86_64/mystaticlib.d --serialize-diagnostics /Users/macbook/Documents/macbook/macbook/code/chapter4/mystaticlib/build/mystaticlib.build/Release/mystaticlib.build/Objects-normal/x86_64/mystaticlib.dia -c /Users/macbook/Documents/macbook/macbook/code/chapter4/mystaticlib/mystaticlib/mystaticlib.m -o /Users/macbook/Documents/macbook/macbook/code/chapter4/mystaticlib/build/mystaticlib.build/Release/mystaticlib.build/Objects-normal/x86_64/mystaticlib.o</div><div class="line"></div><div class="line">Libtool build/Release/libmystaticlib.a normal x86_64</div><div class="line">    cd /Users/macbook/Documents/macbook/macbook/code/chapter4/mystaticlib</div><div class="line">    export MACOSX_DEPLOYMENT_TARGET=10.11</div><div class="line">    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/libtool -static -arch_only x86_64 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk -L/Users/macbook/Documents/macbook/macbook/code/chapter4/mystaticlib/build/Release -filelist /Users/macbook/Documents/macbook/macbook/code/chapter4/mystaticlib/build/mystaticlib.build/Release/mystaticlib.build/Objects-normal/x86_64/mystaticlib.LinkFileList -o /Users/macbook/Documents/macbook/macbook/code/chapter4/mystaticlib/build/Release/libmystaticlib.a</div><div class="line"></div><div class="line">** BUILD SUCCEEDED **</div></pre></td></tr></table></figure></p>
+<p>整个编译过程分为： 检查依赖（Check dependencies）、生成辅助文件（Write auxiliary files）、编译（CompileC）、打包生成库（Libtool）等几步。最终打包生成库的环节使用的<code>libtool</code>工具，该工具除了生成静态库，也可以生成动态库，上一节生成动态库使用链接器<code>ld</code>，它底层也是通过<code>libtool</code>来生成动态库的。最后，静态库不需要签名，静态库中的代码最终会被插入到目标程序中，由目标程序来签名。</p>
+<h2 id="0x2-静态库格式"><a href="#0x2-静态库格式" class="headerlink" title="0x2 静态库格式"></a>0x2 静态库格式</h2><p>上一节讲到的动态库文件，它的格式就是标准的Mach-O文件，它与Mach-O可执行文件不同的是，动态库在Mach-O头部指定文件类型为<code>MH_DYLIB</code>，可执行程序为<code>MH_EXECUTE</code>。与动态库不同的是，静态库文件不是标准的Mach-O，它的格式如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">Start</div><div class="line">Symtab Header</div><div class="line">Symbol Table</div><div class="line">String Table</div><div class="line">Object Header 0</div><div class="line">ObjName0.o</div><div class="line">......</div><div class="line">Object Header N</div><div class="line">ObjNameN.o</div></pre></td></tr></table></figure></p>
+<p><code>Start</code>为静态库的开始，它是一个固定长度的签名值“!&lt;arch&gt;\n”，十六进制为“21 3C 61 72 63 68 3E 0A”。</p>
+<p><code>Symtab Header</code>为符号表头，描述了符号表的信息。它使用<code>symtab_header</code>结构体表示，具体定义为：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">struct symtab_header &#123;</div><div class="line">	char    	name[16];       /* 名称 */</div><div class="line">	char    	timestamp[12];  /* 库创建的时间戳 */</div><div class="line">	char        userid[6];    	/* 用户id */</div><div class="line">	char    	groupid[char];  /* 组id */</div><div class="line">    uint64_t    mode;        	/* 文件访问模式 */</div><div class="line">    uint64_t    size;    		/* 符号表占总字节大小 */</div><div class="line">    uint32_t    endheader;    	/* 头结束标志 */</div><div class="line">	char    	longname[20];   /* 符号表长名 */</div><div class="line">&#125;;</div></pre></td></tr></table></figure></p>
+<p><code>Symbol Table</code>为当前静态库导出的符号表。它使用<code>symbol_table</code>结构体表示，具体定义为：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">struct symbol_table &#123;</div><div class="line">	uint32_t   	size;       	/* 符号表占用的总字节数 */</div><div class="line">	symbol_info syminfo[0];  	/* 符号信息，它的个数是 size / sizeof(symbol_info) */</div><div class="line">&#125;;</div><div class="line"></div><div class="line">struct symbol_info &#123;</div><div class="line">	uint32_t    symnameoff;  	/* 符号名在字符串表数据中的偏移值 */</div><div class="line">	uint32_t    objheaderoff;  	/* 符号所属的目标文件的文件头在文件中的偏移值 */</div><div class="line">&#125;;</div></pre></td></tr></table></figure></p>
+<p><code>String Table</code>为字符串表，该结构体存储的字符串信息供符号表使用。使用<code>string_table</code>结构体表示，具体定义为：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">struct string_table &#123;</div><div class="line">	uint32_t   	size;       	/* 字符串表占用的总字节数 */</div><div class="line">	char 		data[size];  	/* 字符串数据 */</div><div class="line">&#125;;</div></pre></td></tr></table></figure></p>
+<p><code>Object Header</code>为目标文件的头，描述了接下来的目标文件的信息。使用<code>object_header</code>结构体表示，具体定义为：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">struct object_header &#123;</div><div class="line">	char    	name[16];       /* 名称 */</div><div class="line">	char    	timestamp[12];  /* 目标文件创建的时间戳 */</div><div class="line">	char        userid[6];    	/* 用户id */</div><div class="line">	char    	groupid[char];  /* 组id */</div><div class="line">    uint64_t    mode;        	/* 文件访问模式 */</div><div class="line">    uint64_t    size;    		/* 符号表占总字节大小 */</div><div class="line">    uint32_t    endheader;    	/* 头结束标志 */</div><div class="line">	char    	longname[20];   /* 符号表长名 */</div><div class="line">&#125;;</div></pre></td></tr></table></figure></p>
+<p><code>object_header</code>结构体的布局与<code>symtab_header</code>基本一样的。</p>
+<p>ObjName.o：在<code>object_header</code>结构体下面紧接着就是具体的目标文件内容了。目标文件是以.o结尾的Mach-O格式的文件，它是由编译器生成的中间文件。目标文件在它的Mach-O头部被标识为<code>MH_OBJECT</code>类型的文件。</p>
+<p>最后，可以使用<code>MachOView</code>查看本小节生成的libmystaticlib.a的结构信息，效果如图所示：<br><img src="/2017/01/15/staticlib/static_lib.png" alt="static_lib"></p>
+<h2 id="0x3-管理静态库"><a href="#0x3-管理静态库" class="headerlink" title="0x3 管理静态库"></a>0x3 管理静态库</h2><p>通过上一小节的分析，我们知道，静态库是由一些头信息加一系统的.o目标文件组成的。在分析静态库中的具体目标文件时，需要先将目标文件解压出来，还好目前主流的静态分析工具都支持直接读取静态库中的目标文件。但如果想要修改静态库中目标文件的内容，就需要先将目标文件取出后，修改后再替换回去，在了解了静态库文件格式后，完全可以自己动手写工具解出静态库中的目标文件，但实现上不用这么麻烦，可以使用库管理工具<code>ar</code>来完成该工作。</p>
+<p>执行如下命令就可以解出上一小节生成的静态库中的目标文件：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ ar -x ./libmystaticlib.a</div></pre></td></tr></table></figure></p>
+<p>操作成功后没有输出信息，但可以发现，当前目录中已经生成了mystaticlib.o文件。在修改完目标文件后，可以将其打包进原来的库，或者直接生成新的静态库，执行以下的命令：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ ar rcs libmystaticlib_new.a *.o</div></pre></td></tr></table></figure></p>
+<p>同样没有输出信息，但ar已经成功将当前目录下所有的目标文件打包进了libmystaticlib_new.a中。</p>
+
+      
+    </div>
+  	
+		<! -- 添加捐赠图标 -->
+<div class ="post-donate">
+    <div id="donate_board" class="donate_bar center">
+        <a id="btn_donate" class="btn_donate" href="javascript:;" title="打赏"></a>
+        <span class="donate_txt">
+           &uarr;<br>
+		   您的支持是作者最大的动力
+        </span>
+        <br>
+      </div>  
+	<div id="donate_guide" class="donate_bar center hidden" >
+		<!-- 支付宝打赏图案 -->
+		<! -- <img src="/images/alipay.png" alt="支付宝打赏">  -->
+		<!-- 微信打赏图案 -->
+		<img src="/images/wxpay.png" alt="微信打赏">  
+    </div>
+	<script type="text/javascript">
+		document.getElementById('btn_donate').onclick = function(){
+			$('#donate_board').addClass('hidden');
+			$('#donate_guide').removeClass('hidden');
+		}
+	</script>
+</div>
+
+  	
+    <footer class="article-footer">
+      <a data-url="https://feicong.github.io/2017/01/15/staticlib/" data-id="cixxx7jfu00089yvj1kbbidji" class="article-share-link">Partager</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/macOS软件安全/">macOS软件安全</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2017/01/14/dylib/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Ancien</strong>
+      <div class="article-nav-title">dylib动态库加载过程分析</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+  <section id="comments">
+    <!-- 多说评论框 start -->
+    <div class="ds-thread" data-thread-key="post-staticlib" data-title="静态库的管理与文件格式分析" data-url="https://feicong.github.io/2017/01/15/staticlib/"></div>
+    <!-- 多说评论框 end -->
+    <!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+    <script type="text/javascript">
+    var duoshuoQuery = {short_name:'feicong'};
+      (function() {
+        var ds = document.createElement('script');
+        ds.type = 'text/javascript';ds.async = true;
+        ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+        ds.charset = 'UTF-8';
+        (document.getElementsByTagName('head')[0] 
+         || document.getElementsByTagName('body')[0]).appendChild(ds);
+      })();
+      </script>
+    <!-- 多说公共JS代码 end -->
+  </section>
+  
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Mot-clés</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/macOS软件安全/">macOS软件安全</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Nuage de mot-clés</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/macOS软件安全/" style="font-size: 10px;">macOS软件安全</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">January 2017</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Articles récents</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2017/01/15/staticlib/">静态库的管理与文件格式分析</a>
+          </li>
+        
+          <li>
+            <a href="/2017/01/14/dylib/">dylib动态库加载过程分析</a>
+          </li>
+        
+          <li>
+            <a href="/2017/01/13/macho/">Mach-O文件格式</a>
+          </li>
+        
+          <li>
+            <a href="/2017/01/12/install-software/">macOS平台软件的下载与安装</a>
+          </li>
+        
+          <li>
+            <a href="/2017/01/12/macos-software/">［置顶］macOS软件安全系列-软件内幕篇</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">links</h3>
+      <div class="widget">
+      	<ul>
+        	
+          	<li class='link'><a href='https://ydc1992.github.io'>Ken&#39;s Blog</a></li>
+        	
+      	</ul>
+      </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2017 John Doe<br>
+      Propulsé by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>

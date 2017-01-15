@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://feicong.github.io/"/>
-  <updated>2017-01-14T01:47:34.000Z</updated>
+  <updated>2017-01-15T00:25:12.000Z</updated>
   <id>https://feicong.github.io/</id>
   
   <author>
@@ -14,6 +14,24 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>静态库的管理与文件格式分析</title>
+    <link href="https://feicong.github.io/2017/01/15/staticlib/"/>
+    <id>https://feicong.github.io/2017/01/15/staticlib/</id>
+    <published>2017-01-15T00:21:06.000Z</published>
+    <updated>2017-01-15T00:25:12.000Z</updated>
+    
+    <summary type="html">
+    
+      &lt;p&gt;静态库与动态库都属于Mach-O格式的文件，动态库使用.dylib作为文件的扩展名，静态库的扩展名则是.a；在功能上，动态库通过动态链接的方式向其它程序提供接口，而静态库则是将功能代码直接编译进目标Mach-O文件中去，多个程序使用同一个动态库并不会增加目标文件的大小，使用
+    
+    </summary>
+    
+    
+      <category term="macOS软件安全" scheme="https://feicong.github.io/tags/macOS%E8%BD%AF%E4%BB%B6%E5%AE%89%E5%85%A8/"/>
+    
+  </entry>
   
   <entry>
     <title>dylib动态库加载过程分析</title>
