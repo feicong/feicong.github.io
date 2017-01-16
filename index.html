@@ -52,9 +52,9 @@
       </nav>
       <nav id="sub-nav">
         
-          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="Flux RSS"></a>
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS-каналы"></a>
         
-        <a id="nav-search-btn" class="nav-icon" title="Rechercher"></a>
+        <a id="nav-search-btn" class="nav-icon" title="Поиск"></a>
       </nav>
       <div id="search-form-wrap">
         <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://feicong.github.io"></form>
@@ -95,7 +95,165 @@
     </div>
   	
     <footer class="article-footer">
-      <a data-url="https://feicong.github.io/2017/01/12/macos-software/" data-id="cixxx7jfg00019yvj4rz2o7uy" class="article-share-link">Partager</a>
+      <a data-url="https://feicong.github.io/2017/01/12/macos-software/" data-id="cixzcrpjy0003w0vjilru0alm" class="article-share-link">Поделиться</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/macOS软件安全/">macOS软件安全</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-pkg" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/01/16/pkg/" class="article-date">
+  <time datetime="2017-01-16T00:19:06.000Z" itemprop="datePublished">2017-01-16</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2017/01/16/pkg/">PKG安装包的管理与文件格式分析</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>不同的操作系统都有专属于自己的软件安装包格式。如Ubuntu系统上的deb安装包，Windows系统上的msi安装包等。macOS系统使用pkg作为软件安装包格式。</p>
+<p>大多数macOS上开发的程序都不需要安装程序，它们只是一个以app结尾的Bundle包，使用zip压缩一下，或者dmg制作一份镜像，是这类程序的主要发布方式。然而，一些App有一些特定的需求，比如：向系统配置面板写配置程序、安装屏幕保护程序、读写特定的目录与文件等。此时就可以制作pkg安装包程序来安装这类特殊的程序了。当然，由于这些特殊性，pkg安装程序无法通过苹果官方商店来发布。</p>
+<h3 id="0x1-构建pkg"><a href="#0x1-构建pkg" class="headerlink" title="0x1 构建pkg"></a>0x1 构建pkg</h3><p>pkg安装程序能够扩展程序安装内容以及读写特定目录的特性，来源于pkg支持的脚本特性，pkg安装程序允许开发人员在程序的安装过程中，运行自己编写的Bash脚本程序。</p>
+<p>苹果官方在低版本的<code>Xcode</code>工具中提供了<code>PackageMaker</code>用来制作pkg，该工具没有直接包含在<code>XCode</code>开发套件中，如果要使用它，需要到苹果的开发者官网上去下载它。下载安装好该工具后，运行PackageMaker.app就可以制作pkg了。</p>
+<p>本小节制作一个pkg安装包，完成以下目标：将上一小节的myframeworktest程序安装到Applications目录下，随便将myframework.framework框架安装到~/Library/frameworks目录中。启动<code>PackageMaker</code>，点击菜单File-&gt;New，在弹出的对话框中，在Organization一栏输入机构信息，如“com.macbook”，点击OK返回程序主界面，点击File-&gt;Save，将工程保存为pkg_install.pmdoc。</p>
+<p>将上一小节的myframeworktest程序放到app目录下，将app目录直接拖入<code>PackageMaker</code>的主界面，会自己加程序添加配置信息，点击Configuration可以设置一些安装时的配置信息，如图所示：<br><img src="/2017/01/16/pkg/pkgmaker.png" alt="pkgmaker"><br><code>install</code>指定要安装的程序路径，这里已经指定好了；<code>Destination</code>指定程序要安装的位置，默认为“/Applications”目录；取消勾选“Allow custom location”选项，让程序只能安装到/Applications目录下，<code>Package Identifier</code>指定安装包的标识符，macOS记录安装过的pkg就是通过它来识别的，手动卸载pkg时需要用到它；<code>Package Version</code>指定安装包的版本，版本号是识别pkg版本升级的关键，为pkg指定升级脚本时需要用到；<code>Restart Action</code>指定pkg安装完成后，是否需要执行注销、关机或重启等操作；<code>Require admin authentication</code>复选框指定安装器需要管理员权限，为pkg指定的安装脚本如果需要管理员权限的话，就需要在此勾选上。<br>配置好后，点击Contents标签，配置需要安装的内容，<code>PackageMaker</code>已经默认选择好了要安装的内容为myframeworktest.app，并且文件的读写与执行权限也自动设置好了，如图所示：<br><img src="/2017/01/16/pkg/pkgmaker_contents.png" alt="pkgmaker_contents"><br>关于文件的读写权限设罢，一个建议的设置如下表所示：</p>
+<p><strong>表4.1 Contents权限设置</strong></p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Owner</th>
+<th>Group</th>
+<th>Permissions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Applications</td>
+<td>root</td>
+<td>admin</td>
+<td>rwxrwxr-x</td>
+</tr>
+<tr>
+<td>System</td>
+<td>root</td>
+<td>admin</td>
+<td>rwxrwxr-x</td>
+</tr>
+<tr>
+<td>Library</td>
+<td>root</td>
+<td>admin</td>
+<td>rwxrwxr-x</td>
+</tr>
+<tr>
+<td>Extensions</td>
+<td>root</td>
+<td>admin</td>
+<td>rwxrwxr-x</td>
+</tr>
+</tbody>
+</table>
+<p>关于拖入Contents中的程序，这里有一个技巧！macOS系统会为操作过的文件夹中生成一个隐藏的<code>.DS_Store</code>文件，如果系统开启了显示隐藏文件的选项，直接打包程序会在安装包中包含隐藏的<code>.DS_Store</code>文件，需要在拖入Contents前将它们全部删除，可以使用如下的命令：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">find ./ -name &quot;.DS_Store&quot; -exec rm -f &#123;&#125; \;</div></pre></td></tr></table></figure></p>
+<p>点击Components标签，配置组件信息。取消掉“Allow Relocation”复选框，否则即使提示安装完成，在/Applications目录下也看不到安装后的程序。如图所示：<br><img src="/2017/01/16/pkg/pkgmaker_components.png" alt="pkgmaker_components"><br>点击Scripts标签，配置运行安装器时需要执行的脚本。将编写好的脚本分别保存为preflight与postflight，然后将它们放到script目录下，执行以下命令为它们赋上可执行权限：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ chmod a+x ./preinstall</div><div class="line">$ chmod a+x ./postflight</div></pre></td></tr></table></figure></p>
+<p>将script目录直接拖入Scripts Directory旁的文本框中，此时，Preflight与Postflight脚本会自动设置完成。如图所示：<br><img src="/2017/01/16/pkg/pkgmaker_script.png" alt="pkgmaker_script"><br>可以设置的脚本有六个，它们按照执行顺序分别是：</p>
+<ul>
+<li>preflight：点击安装界面上的Install按钮时运行此脚本。该脚本在程序每次安装时都会运行。</li>
+<li>preinstall/preupgrade：针对单程序安装包（pkg），该脚本会在preflight脚本运行之后运行，针对多程序安装包（mpkg），该脚本会在用户按下Install铵钮后执行。preinstall与preupgrade的区别在于：preinstall只会在用户第一次安装该程序时执行，而preupgrade相反，如果之前安装过该程序，那么该脚本才会执行，preupgrade用于软件升级时使用。区分程序是否为第一次安装是通过pkg安装器Installer.app来完成的，Installer.app通过查看/private/var/db/receipts目录，查看目录中是否有以程序包名命名的pkg文件，如果存在，说明已经安装过，反之，为第一次安装。</li>
+<li>postinstall/postupgrade：该脚本在程序安装完之后才运行。它们的区别与preinstall/preupgrade一样。</li>
+<li>postflight：该脚本在postinstall/postupgrade脚本之后运行。<br><code>PackageMaker</code>支持Shell脚本与Perl脚本，此处编写的是Shell脚本，preinstall脚本的内容如下：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">#!/usr/bin/env bash</div><div class="line"></div><div class="line">echo &quot;Running myframeworktest.app preinstall script.&quot;</div><div class="line">echo &quot;Killing myframeworktest.app.&quot;</div><div class="line">killall &quot;myframeworktest&quot;</div><div class="line"></div><div class="line">echo &quot;Finding old versions of myframeworktest.&quot;</div><div class="line">mdfind -onlyin /Applications &quot;kMDItemCFBundleIdentifier==&apos;fc.myframeworktest&apos;&quot; | xargs -I % rm -rf %</div><div class="line"></div><div class="line">echo &quot;Removed old versions of myframeworktest.app, if any.&quot;</div><div class="line">echo &quot;Ran myframeworktest.app preinstall script.&quot;</div><div class="line"></div><div class="line">exit 0</div></pre></td></tr></table></figure>
+<p>这段脚本首先使用killall杀掉正在运行的myframeworktest.app进程；接着使用<code>mdfind</code>在/Applications目录下查找程序标识符为”fc.myframeworktest“的程序包路径，找到后使用<code>rm -rf</code>将其删除掉。</p>
+<p>再来看看postflight脚本的内容：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">#!/usr/bin/env bash</div><div class="line"></div><div class="line">echo &quot;Running myframeworktest.app postinstall script.&quot;</div><div class="line">echo &quot;Installing myframework.framework.&quot;</div><div class="line"></div><div class="line">rm -rf ~/Library/Frameworks/myframework.framework</div><div class="line">mkdir ~/Library/Frameworks/myframework.framework</div><div class="line">cp -r /Applications/myframeworktest.app/Contents/Frameworks/myframework.framework/* ~/Library/Frameworks/myframework.framework</div><div class="line"></div><div class="line">chmod -R 6777 ~/Library/Frameworks/myframework.framework</div><div class="line">echo &quot;Ran myframeworktest.app postinstall script.&quot;</div><div class="line"></div><div class="line">exit 0</div></pre></td></tr></table></figure></p>
+<p>该脚本运行时，myframeworktest.app程序包已经安装到了/Applications目录下，将myframework.framework拷贝到~/Library/Frameworks目录下，然后修改它的权限为任何人都可读可写可执行，最后执行完后调用”exit 0”退出脚本。</p>
+<p>配置好要安装的内容与执行脚本后，点击Contents上面的图标，对pkg进行配置，点击Configuration，在Title旁的文本框中输入安装包的标题，例如”mframeworktest installer“；User Sees处选择Easy Install Only（简单安装）即可；Install Destination处勾选Volume selected by user。</p>
+<p>点击Requirements标签，设置pkg运行的系统要求。点击界面左下角的加号”＋“按钮，添加两条规则：一条是System OS Version(e.g. 10.x.x)，另一条是Target OS Version(e.g. 10.x.x)，都设置成”&gt;=“10.6，如图所示：<br><img src="/2017/01/16/pkg/pkgmaker_requirements.png" alt="pkgmaker_requirements"></p>
+<p>最后的Actions标签页不用去管它。配置完了后，还可以点击界面右上角的Edit interface按钮来编辑安装程序的界面。包括：Background、Introduction、Read me、License与Finish up。它们每一项都是一个页面，内容可以选择系统默认的Default，也可以直接写一段文本甙入（Embedded）进去，或者选择一个外部的rtf文档或html网页。如图所示，为一段手写的Read Me：<br><img src="/2017/01/16/pkg/pkgmaker_readme.png" alt="pkgmaker_readme"></p>
+<p>以上所有操作完成后，点击<code>PackageMaker</code>左上角的Build铵钮进行构建，或者Build and Run按钮构建成功后直接运行。构建完成后会针对单程序安装包或多程序安装包生成一个pkg或mpkg文件，该文件是最终可以发布的产品，接下来只需要对其进行安装测试，没问题就可以发布了。</p>
+<p>在新版本的<code>XCode</code>中，提供了命令行工具<code>productbuild</code>来打包制作pkg。本小节<code>PackageMaker</code>操作的步骤可以执行以下命令完成：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ productbuild --component app/myframeworktest.app /Applications --scripts script  ~/Desktop/out.pkg</div></pre></td></tr></table></figure></p>
+<p>命令执行完后，就会在当前用户桌面上生成pkg文件，当然编译时可以指定<code>--sign</code>参数来为pkg签名，pkg的签名不是使用<code>codesign</code>，如果创建pkg时没有对其进行签名，或者手动修改过pkg的内容，可以使用工具<code>productsign</code>来对pkg进行签名。</p>
+<p>介绍了官方的pkg创建工具后，再来看看目前市面上常用的pkg制作工具。<br>喜欢命令行编译的开发人员一定会喜欢工具<code>Luggage</code>（下载地址：“<a href="https://github.com/unixorn/luggage”），它提供了一种自定义脚本的方式来编译构建pkg文件。该工具的使用方法很简单，只需要将整个github上的文件复制到/usr/local/share/luggage就完成了安装。至于脚本如何编写，可以参考`Luggage`提供的样例，" target="_blank" rel="external">https://github.com/unixorn/luggage”），它提供了一种自定义脚本的方式来编译构建pkg文件。该工具的使用方法很简单，只需要将整个github上的文件复制到/usr/local/share/luggage就完成了安装。至于脚本如何编写，可以参考`Luggage`提供的样例，</a><br>地址为“<a href="https://github.com/unixorn/luggage-examples”，以编译样例中的fex程序为例，在命令行下执行以下命令：" target="_blank" rel="external">https://github.com/unixorn/luggage-examples”，以编译样例中的fex程序为例，在命令行下执行以下命令：</a><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line">$ make</div><div class="line"></div><div class="line">Usage</div><div class="line"></div><div class="line">make clean - clean up work files.</div><div class="line">make dmg   - roll a pkg, then stuff it into a dmg file.</div><div class="line">make zip   - roll a pkg, then stuff it into a zip file.</div><div class="line">make pkg   - roll a pkg.</div><div class="line">make pkgls - list the bill of materials that will be generated by the pkg.</div><div class="line"></div><div class="line">$ make pkg</div><div class="line">Password:</div><div class="line">make -f Makefile -e pack-fex</div><div class="line"></div><div class="line">Disabling bundle relocation.</div><div class="line">If you need to override permissions or ownerships, override modify_packageroot in your Makefile</div><div class="line">Creating /tmp/the_luggage/Fex-20160902/payload/Fex-20160902.pkg with /usr/bin/pkgbuild.</div><div class="line">sudo /usr/bin/pkgbuild --root /tmp/the_luggage/Fex-20160902/root \</div><div class="line">       		--component-plist /tmp/the_luggage/Fex-20160902/luggage.pkg.component.plist \</div><div class="line">       		--identifier com.huronhs.Fex \</div><div class="line">       		--filter &quot;/CVS$&quot; --filter &quot;/\.svn$&quot; --filter &quot;/\.cvsignore$&quot; --filter &quot;/\.cvspass$&quot; --filter &quot;/(\._)?\.DS_Store$&quot; --filter &quot;/\.git$&quot; --filter &quot;/\.gitignore$&quot; \</div><div class="line">       		--scripts /tmp/the_luggage/Fex-20160902/scripts \</div><div class="line">       		--version 20160902 \</div><div class="line">       		--ownership preserve --quiet \</div><div class="line">       		/tmp/the_luggage/Fex-20160902/payload/Fex-20160902.pkg</div><div class="line"></div><div class="line">$ ls</div><div class="line">Fex-20160902.pkg       	Makefile       		fex</div></pre></td></tr></table></figure></p>
+<p>从输出中可以看出，除了构建pkg，<code>Luggage</code>还支持生成dmg与zip打包的程序，非常方便。</p>
+<p>与<code>Luggage</code>类似的还有<code>createOSXinstallPkg</code>（下载地址：“<a href="https://github.com/munki/createOSXinstallPkg”），使用方法也很简单，有兴趣的读者可以到github页面上查看如何使用。" target="_blank" rel="external">https://github.com/munki/createOSXinstallPkg”），使用方法也很简单，有兴趣的读者可以到github页面上查看如何使用。</a></p>
+<p>最后，还有一款免费强大的pkg安装包制作工具<code>Iceberg</code>（下载地址：<a href="http://s.sudre.free.fr/Software/Iceberg.html" target="_blank" rel="external">http://s.sudre.free.fr/Software/Iceberg.html</a> ），该工具可以修改安装程序界面的背景图片，此处就不去讨论它的用法了，有兴趣的读者可以去它的官网下载了试试。</p>
+<h3 id="0x2-pkg的安装与卸载"><a href="#0x2-pkg的安装与卸载" class="headerlink" title="0x2 pkg的安装与卸载"></a>0x2 pkg的安装与卸载</h3><p>安装pkg很简单，只要双击pkg，或者双击mpkg，就会弹出安装向导，按照步骤不停点击Next，直到安装完成，安装过程中，可能执行一些操作可能会需要管理器权限，系统会弹出提示要求用户输入管理员密码，按照操作输入密码即可。除了双击安装外，还可以使用命令行工具<code>installer</code>进行静默安装，执行以下命令可以安装上一小节的pkg：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ sudo installer -pkg ./myframework_installer.pkg -target LocalSystem</div><div class="line">Password:</div><div class="line">installer: Package name is myframework installer</div><div class="line">installer: Upgrading at base path /</div><div class="line">installer: The upgrade was successful.</div></pre></td></tr></table></figure></p>
+<p>pkg的卸载就没这么简单了！苹果公司没有提供直接卸载pkg的方法，上一小节没有制作pkg格式的卸载程序，而是编写了一个简单的脚本，只需要双击运行它就可以卸载上一节制作的pkg。脚本的代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">#!/usr/bin/env bash</div><div class="line"></div><div class="line">if [ -d ~/Library/Frameworks/myframework.framework ]; then</div><div class="line">   /bin/rm -rf ~/Library/Frameworks/myframework.framework</div><div class="line">fi</div><div class="line"></div><div class="line">if [ -d /Application/myframework.app ]; then</div><div class="line">   /bin/rm -rf /Applications/myframeworktest.app</div><div class="line">fi</div><div class="line"></div><div class="line">echo done.</div></pre></td></tr></table></figure></p>
+<p>对于没有提供卸载程序的pkg，卸载它们就只能手动或者依赖第三方的工具。例如<code>UninstallPKG</code>（下载地址：<a href="http://www.corecode.at/uninstallpkg" target="_blank" rel="external">http://www.corecode.at/uninstallpkg</a> ），这是一个收费软件，安装并运行该软件后，它会收集系统中安装的所有pkg软件，然后使用列表形式展示出来，如图所示：<br><img src="/2017/01/16/pkg/uninstallpkg.png" alt="uninstallpkg"><br>点击View Package…按钮，可以查看pkg在系统中写入了哪些文件内容，点击Uninstall Package…可以直接卸载pkg。</p>
+<p><code>UninstallPKG</code>是如何做到收集与卸载系统中安装的pkg呢？其实它的原理并不难。它通过读取/private/var/db/receipts下的pkg列表，然后使用<code>lsbom</code>查看这些pkg文件的bom信息，找到bom文件中保存的文件列表，将它们列举出来，卸载的时候将它们全部删除即可。执行如下的命令列表可以查看上一小节pkg的信息：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line">$ cd /private/var/db/receipts</div><div class="line">$ ls | grep macbook</div><div class="line">com.macbook.myframeworkInstaller.pkg.bom</div><div class="line">com.macbook.myframeworkInstaller.pkg.plist</div><div class="line">$  lsbom -pf ./com.macbook.myframeworkInstaller.pkg.bom</div><div class="line">.</div><div class="line">./myframeworktest.app</div><div class="line">./myframeworktest.app/Contents</div><div class="line">./myframeworktest.app/Contents/Frameworks</div><div class="line">./myframeworktest.app/Contents/Frameworks/myframework.framework</div><div class="line">./myframeworktest.app/Contents/Frameworks/myframework.framework/Resources</div><div class="line">./myframeworktest.app/Contents/Frameworks/myframework.framework/Versions</div><div class="line">./myframeworktest.app/Contents/Frameworks/myframework.framework/Versions/A</div><div class="line">./myframeworktest.app/Contents/Frameworks/myframework.framework/Versions/A/Resources</div><div class="line">./myframeworktest.app/Contents/Frameworks/myframework.framework/Versions/A/Resources/Info.plist</div><div class="line">./myframeworktest.app/Contents/Frameworks/myframework.framework/Versions/A/_CodeSignature</div><div class="line">./myframeworktest.app/Contents/Frameworks/myframework.framework/Versions/A/_CodeSignature/CodeResources</div><div class="line">./myframeworktest.app/Contents/Frameworks/myframework.framework/Versions/A/myframework</div><div class="line">./myframeworktest.app/Contents/Frameworks/myframework.framework/Versions/Current</div><div class="line">./myframeworktest.app/Contents/Frameworks/myframework.framework/myframework</div><div class="line">./myframeworktest.app/Contents/Info.plist</div><div class="line">./myframeworktest.app/Contents/MacOS</div><div class="line">./myframeworktest.app/Contents/MacOS/myframeworktest</div><div class="line">./myframeworktest.app/Contents/PkgInfo</div><div class="line">./myframeworktest.app/Contents/Resources</div><div class="line">./myframeworktest.app/Contents/Resources/Base.lproj</div><div class="line">./myframeworktest.app/Contents/Resources/Base.lproj/MainMenu.nib</div><div class="line">./myframeworktest.app/Contents/_CodeSignature</div><div class="line">./myframeworktest.app/Contents/_CodeSignature/CodeResources</div></pre></td></tr></table></figure></p>
+<p>可以看出，脚本中执行的命令，在~/Library/Frameworks目录中安装的myframework.framework并没有列出来，而只有在Contents中指定的内容。上面查看bom信息使用的<code>lsbom</code>命令，其实，查看pkg中的内容还有一种更简单的方法，在双击运行pkg后，不要点击Continue按钮，而是点击菜单File-&gt;Show Files，pkg中包含的文件内容就一目了然了，如图所示：<br><img src="/2017/01/16/pkg/pkg_showfiles.png" alt="pkg_showfiles"><br>除了手动的去/private/var/db/receipts目录下读取pkg列表，还可以使用pkg管理工具<code>pkgutil</code>来查看系统中安装的pkg信息，不过只有查看功能，不能卸载。执行如下命令可以查看上一节安装的pkg信息，效果与上面一样：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line">$ pkgutil --pkgs | grep -i com.macbook</div><div class="line">com.macbook.myframeworkInstaller.pkg</div><div class="line">$ pkgutil --files com.macbook.myframeworkInstaller.pkg</div><div class="line">myframeworktest.app</div><div class="line">myframeworktest.app/Contents</div><div class="line">myframeworktest.app/Contents/Frameworks</div><div class="line">myframeworktest.app/Contents/Frameworks/myframework.framework</div><div class="line">myframeworktest.app/Contents/Frameworks/myframework.framework/Resources</div><div class="line">myframeworktest.app/Contents/Frameworks/myframework.framework/Versions</div><div class="line">myframeworktest.app/Contents/Frameworks/myframework.framework/Versions/A</div><div class="line">myframeworktest.app/Contents/Frameworks/myframework.framework/Versions/A/Resources</div><div class="line">myframeworktest.app/Contents/Frameworks/myframework.framework/Versions/A/Resources/Info.plist</div><div class="line">myframeworktest.app/Contents/Frameworks/myframework.framework/Versions/A/_CodeSignature</div><div class="line">myframeworktest.app/Contents/Frameworks/myframework.framework/Versions/A/_CodeSignature/CodeResources</div><div class="line">myframeworktest.app/Contents/Frameworks/myframework.framework/Versions/A/myframework</div><div class="line">myframeworktest.app/Contents/Frameworks/myframework.framework/Versions/Current</div><div class="line">myframeworktest.app/Contents/Frameworks/myframework.framework/myframework</div><div class="line">myframeworktest.app/Contents/Info.plist</div><div class="line">myframeworktest.app/Contents/MacOS</div><div class="line">myframeworktest.app/Contents/MacOS/myframeworktest</div><div class="line">myframeworktest.app/Contents/PkgInfo</div><div class="line">myframeworktest.app/Contents/Resources</div><div class="line">myframeworktest.app/Contents/Resources/Base.lproj</div><div class="line">myframeworktest.app/Contents/Resources/Base.lproj/MainMenu.nib</div><div class="line">myframeworktest.app/Contents/_CodeSignature</div><div class="line">myframeworktest.app/Contents/_CodeSignature/CodeResources</div></pre></td></tr></table></figure></p>
+<h3 id="0x3-pkg文件格式"><a href="#0x3-pkg文件格式" class="headerlink" title="0x3 pkg文件格式"></a>0x3 pkg文件格式</h3><p>pkg分为pkg与mpkg，前者是针对单程序安装；后者是针对多程序安装，它包含一个或多个的子包（Sub Package）。pkg本身又有两种格式，一种是与Bundle一样，有着特定组织结构的目录，上一小节生成的pkg的安装包就是这种格式的，还有一种是xar格式的文件，下面分别对这两种格式的安装包进行分析。</p>
+<p>首先看myframework_installer.mpkg，使用<code>tree</code>命令（系统默认没有此命令，可以使用“brew install tree”进行安装）查看它的目录结构如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line">$ tree ./myframework_installer.mpkg/</div><div class="line">./myframework_installer.mpkg/</div><div class="line">└── Contents</div><div class="line">    ├── Packages</div><div class="line">    │   └── app.pkg</div><div class="line">    │       └── Contents</div><div class="line">    │           ├── Archive.bom</div><div class="line">    │           ├── Archive.pax.gz</div><div class="line">    │           ├── Info.plist</div><div class="line">    │           ├── PkgInfo</div><div class="line">    │           └── Resources</div><div class="line">    │               ├── en.lproj</div><div class="line">    │               │   └── Description.plist</div><div class="line">    │               ├── package_version</div><div class="line">    │               ├── postflight</div><div class="line">    │               └── preflight</div><div class="line">    ├── Resources</div><div class="line">    │   └── en.lproj</div><div class="line">    └── distribution.dist</div><div class="line"></div><div class="line">8 directories, 9 files</div></pre></td></tr></table></figure></p>
+<p>对于外层的mpkg，它的Packages目录下存放的是pkg文件列表，也就是子包列表；Resources目录存放了pkg用到的资源、如本地化资源、图像、rtf文档、pdf文档等；还有一个distribution.dist文件，这是一个xml文档，包含了要安装的子包、运行时脚本等信息。对于当前的mpkg，它的内容如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div></pre></td><td class="code"><pre><div class="line">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; standalone=&quot;no&quot;?&gt;</div><div class="line">&lt;installer-script minSpecVersion=&quot;1.000000&quot; authoringTool=&quot;com.apple.PackageMaker&quot; authoringToolVersion=&quot;3.0.6&quot; authoringToolBuild=&quot;201&quot;&gt;</div><div class="line">    &lt;title&gt;myframework installer&lt;/title&gt;</div><div class="line">    &lt;options customize=&quot;never&quot; allow-external-scripts=&quot;no&quot; rootVolumeOnly=&quot;false&quot;/&gt;</div><div class="line">    &lt;installation-check script=&quot;pm_install_check();&quot;/&gt;</div><div class="line">    &lt;volume-check script=&quot;pm_volume_check();&quot;/&gt;</div><div class="line">    &lt;script&gt;function pm_volume_check() &#123;</div><div class="line">  if(!(my.target.systemVersion &amp;amp;&amp;amp; /* &amp;gt;= */ system.compareVersions(my.target.systemVersion.ProductVersion, &apos;10.6&apos;) &amp;gt;= 0)) &#123;</div><div class="line">    my.result.title = &apos;Failure&apos;;</div><div class="line">    my.result.message = &apos;Installation cannot proceed, as not all requirements were met.&apos;;</div><div class="line">    my.result.type = &apos;Fatal&apos;;</div><div class="line">    return false;</div><div class="line">  &#125;</div><div class="line">  return true;</div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line">function pm_install_check() &#123;</div><div class="line">  if(!(/* &amp;gt;= */ system.compareVersions(system.version.ProductVersion, &apos;10.6&apos;) &amp;gt;= 0)) &#123;</div><div class="line">    my.result.title = &apos;Failure&apos;;</div><div class="line">    my.result.message = &apos;Installation cannot proceed, as not all requirements were met.&apos;;</div><div class="line">    my.result.type = &apos;Fatal&apos;;</div><div class="line">    return false;</div><div class="line">  &#125;</div><div class="line">  return true;</div><div class="line">&#125;</div><div class="line">&lt;/script&gt;</div><div class="line">    &lt;choices-outline&gt;</div><div class="line">        &lt;line choice=&quot;choice0&quot;/&gt;</div><div class="line">    &lt;/choices-outline&gt;</div><div class="line">    &lt;choice id=&quot;choice0&quot; title=&quot;app&quot;&gt;</div><div class="line">        &lt;pkg-ref id=&quot;com.macbook.myframeworkInstaller.pkg&quot;/&gt;</div><div class="line">    &lt;/choice&gt;</div><div class="line">    &lt;pkg-ref id=&quot;com.macbook.myframeworkInstaller.pkg&quot; installKBytes=&quot;108&quot; version=&quot;1.0&quot; auth=&quot;Root&quot;&gt;file:./Contents/Packages/app.pkg&lt;/pkg-ref&gt;</div><div class="line">&lt;/installer-script&gt;</div></pre></td></tr></table></figure></p>
+<p><code>pm_install_check()</code>与<code>pm_volume_check()</code>分别做安装时检查与卷标检查，下面的choices-outline部分指定了安装时使用的choice，也就是选择执行哪个子包，对于当前mpkg包，它只有一个pkg，choice的id为“choice0”，指向的路径是“file:./Contents/Packages/app.pkg”。</p>
+<p>app.pkg是要安装的子包，是一个pkg格式的Bundle结构的目录，它包含一个Contents子目录，里面有四个文件与一个目录Resources，它们分别是：</p>
+<ul>
+<li>Archive.bom：bom信息。存放的要安装写入的文件列表，可以使用“lsbom -pf”命令查看，效果与上一节讲到的一样。</li>
+<li><p>Archive.pax.gz：使用pax格式打包后，再使用gzip压缩的压缩包，它的内容就是要安装的内容，此处就是myframeworktest.app程序。可以执行以下命令进行解压：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line">$ cd ./myframework_installer.mpkg/Contents/Packages/app.pkg/Contents/</div><div class="line">$ gunzip -d ./Archive.pax.gz</div><div class="line">$ pax -rvf ./Archive.pax</div><div class="line">.</div><div class="line">./myframeworktest.app</div><div class="line">./myframeworktest.app/Contents</div><div class="line">./myframeworktest.app/Contents/_CodeSignature</div><div class="line">./myframeworktest.app/Contents/_CodeSignature/CodeResources</div><div class="line">./myframeworktest.app/Contents/Frameworks</div><div class="line">./myframeworktest.app/Contents/Frameworks/myframework.framework</div><div class="line">./myframeworktest.app/Contents/Frameworks/myframework.framework/myframework</div><div class="line">./myframeworktest.app/Contents/Frameworks/myframework.framework/Resources</div><div class="line">./myframeworktest.app/Contents/Frameworks/myframework.framework/Versions</div><div class="line">./myframeworktest.app/Contents/Frameworks/myframework.framework/Versions/A</div><div class="line">./myframeworktest.app/Contents/Frameworks/myframework.framework/Versions/A/_CodeSignature</div><div class="line">./myframeworktest.app/Contents/Frameworks/myframework.framework/Versions/A/_CodeSignature/CodeResources</div><div class="line">./myframeworktest.app/Contents/Frameworks/myframework.framework/Versions/A/myframework</div><div class="line">./myframeworktest.app/Contents/Frameworks/myframework.framework/Versions/A/Resources</div><div class="line">./myframeworktest.app/Contents/Frameworks/myframework.framework/Versions/A/Resources/Info.plist</div><div class="line">./myframeworktest.app/Contents/Frameworks/myframework.framework/Versions/Current</div><div class="line">./myframeworktest.app/Contents/Info.plist</div><div class="line">./myframeworktest.app/Contents/MacOS</div><div class="line">./myframeworktest.app/Contents/MacOS/myframeworktest</div><div class="line">./myframeworktest.app/Contents/PkgInfo</div><div class="line">./myframeworktest.app/Contents/Resources</div><div class="line">./myframeworktest.app/Contents/Resources/Base.lproj</div><div class="line">./myframeworktest.app/Contents/Resources/Base.lproj/MainMenu.nib</div></pre></td></tr></table></figure>
+</li>
+<li><p>Info.plist：pkg包的信息。如<code>CFBundleIdentifier</code>为pkg的标识；IFMajorVersion与IFMinorVersion分别为pkg的主版本与子版本号；IFPkgFlagInstalledSize为pkg安装后所需要占用的字节大小。</p>
+</li>
+<li>PkgInfo：8字节的标识。表明是一个pkg文件。</li>
+</ul>
+<p>Resources目录除了包含资源文件外，还包含了：</p>
+<ul>
+<li>package_version：它是包版本文件。也就是使用<code>PackageMaker</code>制作pkg时设置的版本号；</li>
+<li>postflight/preflight：pkg要执行的脚本文件。上一节中讲过，此处是未经过加密明文存放的。</li>
+</ul>
+<p>另外一种是xar格式的文件，可以使用如下命令查看myframework_installer.pkg文件的格式：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ file ./myframework_installer.pkg</div><div class="line">./myframework_installer.pkg: xar archive - version 1</div></pre></td></tr></table></figure></p>
+<p>xar是压缩的可扩展归档格式，可以使用<code>xar</code>命令对其进行解压，执行如下命令解压：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">$ xar -xvf ./myframework_installer.pkg</div><div class="line">Distribution</div><div class="line">app.pkg/PackageInfo</div><div class="line">app.pkg/Bom</div><div class="line">app.pkg/Payload</div><div class="line">app.pkg/Scripts</div><div class="line">app.pkg</div><div class="line">Resources/en.lproj</div><div class="line">Resources</div></pre></td></tr></table></figure></p>
+<p>Distribution与前面讨论的distribution.dist文件基本一样；Resources目录与前面的也一样；主要看app.pkg，它包含四个文件：</p>
+<ul>
+<li>Bom：bom信息，存放的要安装写入的文件列表。可以使用“lsbom -pf”命令查看，效果与上一节讲到的一样。</li>
+<li>PackageInfo：文本文件，包含了包的信息。可以使用<code>cat</code>命令查看它的内容：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">$ cat app.pkg/PackageInfo</div><div class="line"></div><div class="line">&lt;pkg-info format-version=&quot;2&quot; identifier=&quot;com.macbook.myframeworkInstaller.pkg&quot; version=&quot;1.0&quot; install-location=&quot;/Applications&quot; auth=&quot;root&quot;&gt;</div><div class="line">    &lt;payload installKBytes=&quot;108&quot; numberOfFiles=&quot;25&quot;/&gt;</div><div class="line">    &lt;scripts&gt;</div><div class="line">        &lt;preinstall file=&quot;./preflight&quot;/&gt;</div><div class="line">        &lt;postinstall file=&quot;./postflight&quot;/&gt;</div><div class="line">    &lt;/scripts&gt;</div><div class="line">    &lt;bundle id=&quot;fc.myframeworktest&quot; CFBundleIdentifier=&quot;fc.myframeworktest&quot; path=&quot;./myframeworktest.app&quot; CFBundleVersion=&quot;1&quot;&gt;</div><div class="line">        &lt;bundle id=&quot;fc.myframework&quot; CFBundleIdentifier=&quot;fc.myframework&quot; path=&quot;./Contents/Frameworks/myframework.framework&quot; CFBundleVersion=&quot;1&quot;/&gt;</div><div class="line">    &lt;/bundle&gt;</div><div class="line">    &lt;bundle-version&gt;</div><div class="line">        &lt;bundle id=&quot;fc.myframeworktest&quot;/&gt;</div><div class="line">        &lt;bundle id=&quot;fc.myframework&quot;/&gt;</div><div class="line">    &lt;/bundle-version&gt;</div></pre></td></tr></table></figure>
+<ul>
+<li>Payload：经过gzip压缩过的数据内容，本处为要安装的myframework.app，可以使用如下命令进行解压：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ cat ./Payload | cpio -i</div><div class="line">3 blocks</div></pre></td></tr></table></figure>
+<p>解压成功后就会在当前目录下生成myframework.app。</p>
+<ul>
+<li>Scripts：经过gzip压缩过的脚本。可以使用如下命令进行解压：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ cd app.pkg</div><div class="line">$ cat ./Scripts | cpio -i</div><div class="line">181 blocks</div></pre></td></tr></table></figure>
+<p>解压成功后就会在当前目录下生成未加密的preflight与postflight脚本。</p>
+<h3 id="0x4-破解pkg"><a href="#0x4-破解pkg" class="headerlink" title="0x4 破解pkg"></a>0x4 破解pkg</h3><p>对于pkg格式有一定了解后，修改或破解pkg就不会感到多难。破解pkg无非有以下三种：</p>
+<ul>
+<li>资源的替换或修改：针对文件夹类型的pkg，未加密，可直接进行修改替换；针对xar类型的pkg，需要先解压xar，然后替换或修改完资源后，重新压缩xar。</li>
+<li>安装脚本的替换或修改：针对文件夹类型的pkg，未加密，可直接进行修改替换；针对xar类型的pkg，需要先解压xar，然后解压Scripts，然后替换或修改完脚本后，重新压缩Scripts，最后重新压缩xar。</li>
+<li>安装内容的替换或修改：针对文件夹类型的pkg，未加密，但需要先对Archive.pax.gz进行解包，修改完后，需要重新打包回去；针对xar类型的pkg，需要先解压xar，然后解压Payload，替换或修改完数据后，重新压缩Payload，最后重新压缩xar。</li>
+</ul>
+<p>以上步骤是操作思路，实际分析过程中，使用工具来做一些辅助工作是可以大大提高效率的，在拿到pkg后，首先快速浏览pkg文件，简单分析出pkg的行为与可能要做的操作。推荐一款工具：<code>Suspicious Package</code>（下载地址：<a href="http://www.mothersruin.com/software/SuspiciousPackage" target="_blank" rel="external">http://www.mothersruin.com/software/SuspiciousPackage</a> ），此工具提供了快速浏览插件，安装完成后，在要操作的pkg上按下空格，就可以快速查看pkg，检索要安装的软件内容，如图所示：<br><img src="/2017/01/16/pkg/pkg_quicklook.png" alt="pkg_quicklook"><br>还可以查看要执行的脚本的内容，如图所示：<br><img src="/2017/01/16/pkg/pkg_quicklook_script.png" alt="pkg_quicklook_script"><br>对pkg有了初步了解后，找到需要操作的地方后，下一步就是提取数据内容了，<code>Suspicious Package</code>支持数据的提取，使用<code>Suspicious Package</code>打开pkg文件后，在主界面的All Files列就可以查看所有文件，可以选中要导出的文件，直接拖出到Finder，或者点击Action-&gt;Export，都可以将文件导出，操作效果如图所示：<br><img src="/2017/01/16/pkg/pkg_export.png" alt="pkg_export">  </p>
+<p>除了<code>Suspicious Package</code>外，介绍另外一款更强大的工具：<code>Pacifist</code>（下载地址：<a href="http://www.charlessoft.com" target="_blank" rel="external">http://www.charlessoft.com</a> ），这款工具支持多种文件数据的提取，其中就包括pkg，如图所示：<br><img src="/2017/01/16/pkg/pacifist.png" alt="pacifist"><br>选中要提取的文件，右键选择“Extract to Custom Location…”，或者直接拖到要保存到的文件夹中，都可以将文件提取出来。</p>
+<p>提取出来的文件，分析完成，修改好了后，就要打包回去了，<code>Pacifist</code>不支持将数据打包回去，如果修改的是Payload，可以使用如下命令将app目录下的myframeworktest.app打包回去：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">find app/* | cpio -o &gt; ./Payload</div></pre></td></tr></table></figure></p>
+<p>如果是脚本文件，也可以如法炮制，最后就是将修改好的Payload或Scripts重新打包回去，可以使用执行“<code>xar cvf</code>”命令来操作，这里推荐另一款图形化工具：<code>Flat Package Editor</code>，该工具是苹果官方提供的，与<code>PackageMaker</code>一起提供给开发人员，它可以对pkg直接进行增、删、改操作，使用<code>Flat Package Editor</code>打开要操作的pkg，将修改好的Payload或Scripts拖回去，然后，点击菜单File-&gt;Save就保存成功了！如图所示：<br><img src="/2017/01/16/pkg/flat_pkg_editor.png" alt="flat_pkg_editor"><br>操作完成后，pkg就算修改好了，接下来测试安装没问题就算破解完成了。</p>
+
+      
+    </div>
+  	
+    <footer class="article-footer">
+      <a data-url="https://feicong.github.io/2017/01/16/pkg/" data-id="cixzcrpk60008w0vj1zix0l1b" class="article-share-link">Поделиться</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/macOS软件安全/">macOS软件安全</a></li></ul>
@@ -152,7 +310,7 @@
     </div>
   	
     <footer class="article-footer">
-      <a data-url="https://feicong.github.io/2017/01/15/staticlib/" data-id="cixxx7jfu00089yvj1kbbidji" class="article-share-link">Partager</a>
+      <a data-url="https://feicong.github.io/2017/01/15/staticlib/" data-id="cixzcrpka000aw0vj1tie7mu9" class="article-share-link">Поделиться</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/macOS软件安全/">macOS软件安全</a></li></ul>
@@ -240,7 +398,7 @@
     </div>
   	
     <footer class="article-footer">
-      <a data-url="https://feicong.github.io/2017/01/14/dylib/" data-id="cixxx7jfq00059yvjse1plxou" class="article-share-link">Partager</a>
+      <a data-url="https://feicong.github.io/2017/01/14/dylib/" data-id="cixzcrpjt0001w0vjor71apck" class="article-share-link">Поделиться</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/macOS软件安全/">macOS软件安全</a></li></ul>
@@ -358,7 +516,7 @@
     </div>
   	
     <footer class="article-footer">
-      <a data-url="https://feicong.github.io/2017/01/13/macho/" data-id="cixxx7jfl00039yvj2in8v811" class="article-share-link">Partager</a>
+      <a data-url="https://feicong.github.io/2017/01/13/macho/" data-id="cixzcrpk30005w0vjjz8v19la" class="article-share-link">Поделиться</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/macOS软件安全/">macOS软件安全</a></li></ul>
@@ -428,7 +586,7 @@
     </div>
   	
     <footer class="article-footer">
-      <a data-url="https://feicong.github.io/2017/01/12/install-software/" data-id="cixxx7jfc00009yvjr36mykyu" class="article-share-link">Partager</a>
+      <a data-url="https://feicong.github.io/2017/01/12/install-software/" data-id="cixzcrpjp0000w0vjyoivpopo" class="article-share-link">Поделиться</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/macOS软件安全/">macOS软件安全</a></li></ul>
@@ -470,7 +628,7 @@
     </div>
   	
     <footer class="article-footer">
-      <a data-url="https://feicong.github.io/2017/01/11/new-chapter/" data-id="cixxx7jfn00049yvjc3108ml5" class="article-share-link">Partager</a>
+      <a data-url="https://feicong.github.io/2017/01/11/new-chapter/" data-id="cixzcrpk10004w0vjlr8k8ttl" class="article-share-link">Поделиться</a>
       
       
     </footer>
@@ -491,7 +649,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Mot-clés</h3>
+    <h3 class="widget-title">Метки</h3>
     <div class="widget">
       <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/macOS软件安全/">macOS软件安全</a></li></ul>
     </div>
@@ -501,7 +659,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Nuage de mot-clés</h3>
+    <h3 class="widget-title">Облако меток</h3>
     <div class="widget tagcloud">
       <a href="/tags/macOS软件安全/" style="font-size: 10px;">macOS软件安全</a>
     </div>
@@ -510,7 +668,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Archives</h3>
+    <h3 class="widget-title">Архив</h3>
     <div class="widget">
       <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">January 2017</a></li></ul>
     </div>
@@ -520,9 +678,13 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Articles récents</h3>
+    <h3 class="widget-title">Недавние записи</h3>
     <div class="widget">
       <ul>
+        
+          <li>
+            <a href="/2017/01/16/pkg/">PKG安装包的管理与文件格式分析</a>
+          </li>
         
           <li>
             <a href="/2017/01/15/staticlib/">静态库的管理与文件格式分析</a>
@@ -538,10 +700,6 @@
         
           <li>
             <a href="/2017/01/12/install-software/">macOS平台软件的下载与安装</a>
-          </li>
-        
-          <li>
-            <a href="/2017/01/12/macos-software/">［置顶］macOS软件安全系列-软件内幕篇</a>
           </li>
         
       </ul>
@@ -570,7 +728,7 @@
   <div class="outer">
     <div id="footer-info" class="inner">
       &copy; 2017 John Doe<br>
-      Propulsé by <a href="http://hexo.io/" target="_blank">Hexo</a>
+      Создано с помощью <a href="http://hexo.io/" target="_blank">Hexo</a>
     </div>
   </div>
 </footer>

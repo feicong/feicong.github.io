@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://feicong.github.io/"/>
-  <updated>2017-01-15T00:25:12.000Z</updated>
+  <updated>2017-01-16T00:28:31.000Z</updated>
   <id>https://feicong.github.io/</id>
   
   <author>
@@ -14,6 +14,25 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>PKG安装包的管理与文件格式分析</title>
+    <link href="https://feicong.github.io/2017/01/16/pkg/"/>
+    <id>https://feicong.github.io/2017/01/16/pkg/</id>
+    <published>2017-01-16T00:19:06.000Z</published>
+    <updated>2017-01-16T00:28:31.000Z</updated>
+    
+    <summary type="html">
+    
+      &lt;p&gt;不同的操作系统都有专属于自己的软件安装包格式。如Ubuntu系统上的deb安装包，Windows系统上的msi安装包等。macOS系统使用pkg作为软件安装包格式。&lt;/p&gt;
+&lt;p&gt;大多数macOS上开发的程序都不需要安装程序，它们只是一个以app结尾的Bundle包，使用z
+    
+    </summary>
+    
+    
+      <category term="macOS软件安全" scheme="https://feicong.github.io/tags/macOS%E8%BD%AF%E4%BB%B6%E5%AE%89%E5%85%A8/"/>
+    
+  </entry>
   
   <entry>
     <title>静态库的管理与文件格式分析</title>
