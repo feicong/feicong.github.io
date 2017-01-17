@@ -69,6 +69,7 @@ Plugins:
 - hexo-generator-robotstxt
 
 theme: landscape
+# theme: landscape-plus
 
 robotstxt:
   useragent: "*"
@@ -82,6 +83,8 @@ robotstxt:
     - /
     - /archives/
   sitemap: https://feicong.github.io/sitemap.xml
+
+duoshuo_shortname: feicong
 
 feed:
   type: atom
