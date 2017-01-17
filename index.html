@@ -52,9 +52,9 @@
       </nav>
       <nav id="sub-nav">
         
-          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="Flux RSS"></a>
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
         
-        <a id="nav-search-btn" class="nav-icon" title="Rechercher"></a>
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
       </nav>
       <div id="search-form-wrap">
         <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://feicong.github.io"></form>
@@ -95,7 +95,57 @@
     </div>
   	
     <footer class="article-footer">
-      <a data-url="https://feicong.github.io/2017/01/12/macos-software/" data-id="cixzcujj70005e1vja17j4iuv" class="article-share-link">Partager</a>
+      <a data-url="https://feicong.github.io/2017/01/12/macos-software/" data-id="ciy0vgmpe0001t5vj13hmdrcp" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/macOS软件安全/">macOS软件安全</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-dmg" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/01/17/dmg/" class="article-date">
+  <time datetime="2017-01-17T01:55:56.000Z" itemprop="datePublished">2017-01-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2017/01/17/dmg/">DMG文件管理</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>dmg是苹果电脑上专用的磁盘镜像（disk image）文件，类似于Windows平台上的iso镜像，dmg类似于一个压缩文档，支持压缩与加密，将程序与文档打包成dmg是一种比较流行的软件发布形式。</p>
+<h3 id="0x1-构建dmg"><a href="#0x1-构建dmg" class="headerlink" title="0x1 构建dmg"></a>0x1 构建dmg</h3><p>苹果官方系统自带的磁盘管理工具<code>Disk Utility</code>可以很方便的构建dmg文件，最简单的方法是启动/Applications/Utilies/Disk Utility，点击菜单File-&gt;New Image-&gt;Image From Folder…，从文件夹创建镜像，这一步，选择上一节的app目录，如图所示：<br><img src="/2017/01/17/dmg/disk_utility.png" alt="disk_utility"><br>在Save As处输入要保存的文件名；Encryption处选择是否进行加密，none表示不加密，128-bit AES encryption是macOS版本10.3以前之前支持的128位的AES加密，258-bit AES encryption则是macOS版本10.5以后才开始支持的256位AES加密，在选择这两种中任意一种加密方式后，会弹出输入密码的对话框，提示输入的密码不是AES算法的加密key，只是一个用户自已设置的密码；设置好密码后，在Image Format处设置镜像的格式，read-only表示创建只读的镜像，compressed表示对镜像进行压缩，read/write表示镜像可读可写，DVD/CD master表示创建DVD镜像，hybrid image表示创建混合镜像。选择好选项后，点击Save铵钮，dmg就创建成功了。</p>
+<p>除了使用图形界面创建dmg外，还可以使用命令行工具<code>hdiutil</code>来创建，例如为app目录下的myframeworktest.app创建一个AES128加密，密码为abc123的dmg镜像只需要执行如下命令即可：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ hdiutil create -fs HFS+ -volname myframework  -srcfolder ../pkg_install_script/app -encryption AES-128 -stdinpass  -o myframeworktest_cmd.dmg</div><div class="line">Enter disk image passphrase: //此处输入密码123</div><div class="line">..</div><div class="line">created: /Users/macbook/code/chapter4/dmg/myframeworktest_cmd.dmg</div></pre></td></tr></table></figure></p>
+<p>如果觉得从文件夹中创建的dmg不够个性化，完全可以使用<code>Disk Utility</code>创建自定义的dmg，自定义的dmg包括为dmg指定图标，背景图片，以及dmg文件的显示方式及大小。只需要打开<code>Disk Utility</code>，点击菜单File-&gt;New Image-&gt;Blank Image…，创建一个空白的镜像，在保存对话框中，设置镜像的大小、加密方式、分区格式及镜像格式，需要注意的是，此处镜像格式需要选择read/write disk image，创建成功后，打开镜像，将app目录中的文件复制进去，如果需要更换背景图片，只需要将背景图片复制到镜像中，使用<code>chflags</code>命令设置成隐藏格式，或者放放一个点“.”结尾的目录（点目录默认会隐藏显示），在镜像上右键，在弹出的菜单中选择Get Info，然后设置背景图片即可。操作完后，点击<code>Disk Utility</code>菜单的Images-&gt;Convert…，，选择操作后的dmg镜像，将该镜像压缩保存一下就可以发布了。</p>
+<p>除了官网的<code>Disk Utility</code>外，也可以使用上一小节中介绍的<code>Luggage</code>工具，编译脚本后，执行“make dmg”来生成dmg文件。最后，还有一些第三方的工具也可以创建dmg镜像，比较知名的有<code>DropDMG</code>（下载地址：<a href="http://c-command.com/dropdmg" target="_blank" rel="external">http://c-command.com/dropdmg</a> ），从软件的名称上就可以判断，它支持快速的从文件拖放来创建dmg镜像，有兴趣的读者可以试试，它的使用比较简单，此处不再赘述。</p>
+<h3 id="0x2-管理dmg"><a href="#0x2-管理dmg" class="headerlink" title="0x2 管理dmg"></a>0x2 管理dmg</h3><p>dmg文件格式不是开放的，要想探索它的文件格式，可以逆向<code>hidutil</code>工具处理dmg的部分代码。在使用dmg的过程中，一种典型的可能遇到的场景是将dmg转换格式后，在Windows或Linux平台上使用，针对早期版本的dmg，网上有第三方的开方人员开发了<code>dmg2img</code>工具（下载地址：<a href="https://github.com/Lekensteyn/dmg2img" target="_blank" rel="external">https://github.com/Lekensteyn/dmg2img</a> ），方便将dmg转换成可以在Linux系统上挂载的镜像，还有一个工具<code>dmg2iso</code>（下载地址：<a href="https://sourceforge.net/projects/dmg2iso" target="_blank" rel="external">https://sourceforge.net/projects/dmg2iso</a> ），可以将dmg转换成Windows平台上使用的iso镜像，实际上该工具的底层是调用的<code>hdiutil</code>。</p>
+<p>使用<code>hdiutil</code>来管理dmg已经足够了，它提供了查看、创建、转换dmg等功能，例如，查看myframeworktest.dmg的信息可以执行如下命令：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div></pre></td><td class="code"><pre><div class="line">$ hdiutil imageinfo myframeworktest.dmg</div><div class="line">Format Description: UDIF read-only compressed (zlib)</div><div class="line">Class Name: CUDIFDiskImage</div><div class="line">Checksum Type: CRC32</div><div class="line">Size Information:</div><div class="line">	Compressed Ratio: 0.022532451628704386</div><div class="line">	Total Empty Bytes: 500224</div><div class="line">	Sector Count: 5060</div><div class="line">	Total Bytes: 2590720</div><div class="line">	CUDIFEncoding-bytes-wasted: 7963</div><div class="line">	Total Non-Empty Bytes: 2090496</div><div class="line">	CUDIFEncoding-bytes-in-use: 47410</div><div class="line">	Compressed Bytes: 47410</div><div class="line">	CUDIFEncoding-bytes-total: 55373</div><div class="line">Checksum Value: $404B6F25</div><div class="line">Segments:</div><div class="line">	......</div><div class="line">	-1:</div><div class="line">		Name: Protective Master Boot Record (MBR : 0)</div><div class="line">		Partition Number: -1</div><div class="line">		Checksum Type: CRC32</div><div class="line">		Checksum Value: $0492F534</div><div class="line">	2:</div><div class="line">		Name:  (Apple_Free : 3)</div><div class="line">		Partition Number: 2</div><div class="line">		Checksum Type: CRC32</div><div class="line">		Checksum Value: $00000000</div><div class="line">Format: UDZO</div><div class="line">Backing Store Information:</div><div class="line">	......</div><div class="line">partitions:</div><div class="line">	partition-scheme: GUID</div><div class="line">	block-size: 512</div><div class="line">	partitions:</div><div class="line">		0:</div><div class="line">			partition-name: Protective Master Boot Record</div><div class="line">			partition-start: 0</div><div class="line">			partition-synthesized: true</div><div class="line">			partition-length: 1</div><div class="line">			partition-hint: MBR</div><div class="line">		......</div><div class="line">		7:</div><div class="line">			partition-name: GPT Header</div><div class="line">			partition-start: 5059</div><div class="line">			partition-synthesized: true</div><div class="line">			partition-length: 1</div><div class="line">			partition-hint: Backup GPT Header</div><div class="line">	burnable: false</div><div class="line">udif-ordered-chunks: false</div><div class="line">Properties:</div><div class="line">	Encrypted: false</div><div class="line">	Kernel Compatible: true</div><div class="line">	Checksummed: true</div><div class="line">	Software License Agreement: false</div><div class="line">	Partitioned: false</div><div class="line">	Compressed: true</div><div class="line">Resize limits (per hdiutil resize -limits):</div><div class="line"> min 	 cur 	 max</div><div class="line">5060	5060	5060</div></pre></td></tr></table></figure></p>
+<p>将myframeworktest_cmd.dmg密码abc123更改为123abc只需执行如下命令：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ hdiutil chpass ./myframeworktest_cmd.dmg</div><div class="line">Enter password to access &quot;myframeworktest_cmd.dmg&quot;:			//abc123</div><div class="line">Enter a new password to secure &quot;myframeworktest_cmd.dmg&quot;:	//123abc</div><div class="line">Re-enter new password:		//123abc</div></pre></td></tr></table></figure></p>
+<p>将myframeworktest.dmg转换成iso格式可以执行如下命令：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">$ hdiutil convert ./myframeworktest.dmg -format UDTO -o ./myframeworktest.cdr</div><div class="line">Reading Protective Master Boot Record (MBR : 0)…</div><div class="line">Reading GPT Header (Primary GPT Header : 1)…</div><div class="line">Reading GPT Partition Data (Primary GPT Table : 2)…</div><div class="line">Reading  (Apple_Free : 3)…</div><div class="line">Reading disk image (Apple_HFS : 4)…</div><div class="line">..............................................................................</div><div class="line">Reading  (Apple_Free : 5)…</div><div class="line">Reading GPT Partition Data (Backup GPT Table : 6)…</div><div class="line">..............................................................................</div><div class="line">Reading GPT Header (Backup GPT Header : 7)…</div><div class="line">..............................................................................</div><div class="line">Elapsed Time:   7.868ms</div><div class="line">Speed: 314.0Mbytes/sec</div><div class="line">Savings: 0.0%</div><div class="line">created: /Users/.../code/chapter4/dmg/myframeworktest.cdr</div><div class="line">$ mv ./myframeworktest.cdr ./myframeworktest.iso</div></pre></td></tr></table></figure></p>
+<p>另外，<code>DropDMG</code>也提供了很方便的dmg管理功能。例如，在文件夹上点击右键，在弹出的菜点中，选择Services-&gt;DropDMG:Use Current Configration，<code>DropDMG</code>就会使用当前默认的配置为文件夹在当前目录创建一个dmg，或者在dmg上点击右键，选择DropDMG:Ask for Options，来对dmg做一些修改，例如设置图标、修改密码、更改格式等。</p>
+
+      
+    </div>
+  	
+    <footer class="article-footer">
+      <a data-url="https://feicong.github.io/2017/01/17/dmg/" data-id="ciy0vgmpa0000t5vjnfsdwt4n" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/macOS软件安全/">macOS软件安全</a></li></ul>
@@ -253,7 +303,7 @@
     </div>
   	
     <footer class="article-footer">
-      <a data-url="https://feicong.github.io/2017/01/16/pkg/" data-id="cixzcujjg000ae1vjrq524qdg" class="article-share-link">Partager</a>
+      <a data-url="https://feicong.github.io/2017/01/16/pkg/" data-id="ciy0vgmqj000ft5vj9rx4tlh5" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/macOS软件安全/">macOS软件安全</a></li></ul>
@@ -310,7 +360,7 @@
     </div>
   	
     <footer class="article-footer">
-      <a data-url="https://feicong.github.io/2017/01/15/staticlib/" data-id="cixzcujja0008e1vjntz8c6x7" class="article-share-link">Partager</a>
+      <a data-url="https://feicong.github.io/2017/01/15/staticlib/" data-id="ciy0vgmqh000et5vjhjcthgtz" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/macOS软件安全/">macOS软件安全</a></li></ul>
@@ -398,7 +448,7 @@
     </div>
   	
     <footer class="article-footer">
-      <a data-url="https://feicong.github.io/2017/01/14/dylib/" data-id="cixzcujiq0001e1vjpvhywl1k" class="article-share-link">Partager</a>
+      <a data-url="https://feicong.github.io/2017/01/14/dylib/" data-id="ciy0vgmpo0004t5vjc8fyifhk" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/macOS软件安全/">macOS软件安全</a></li></ul>
@@ -516,7 +566,7 @@
     </div>
   	
     <footer class="article-footer">
-      <a data-url="https://feicong.github.io/2017/01/13/macho/" data-id="cixzcujiw0003e1vjxvrsld30" class="article-share-link">Partager</a>
+      <a data-url="https://feicong.github.io/2017/01/13/macho/" data-id="ciy0vgmpk0003t5vjt420gwcl" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/macOS软件安全/">macOS软件安全</a></li></ul>
@@ -586,7 +636,7 @@
     </div>
   	
     <footer class="article-footer">
-      <a data-url="https://feicong.github.io/2017/01/12/install-software/" data-id="cixzcujil0000e1vjytjpfeob" class="article-share-link">Partager</a>
+      <a data-url="https://feicong.github.io/2017/01/12/install-software/" data-id="ciy0vgmpt0005t5vjic1ropnu" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/macOS软件安全/">macOS软件安全</a></li></ul>
@@ -628,7 +678,7 @@
     </div>
   	
     <footer class="article-footer">
-      <a data-url="https://feicong.github.io/2017/01/11/new-chapter/" data-id="cixzcujj20004e1vjioh7hcah" class="article-share-link">Partager</a>
+      <a data-url="https://feicong.github.io/2017/01/11/new-chapter/" data-id="ciy0vgmqf000dt5vjlvzlhdtg" class="article-share-link">Share</a>
       
       
     </footer>
@@ -649,7 +699,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Mot-clés</h3>
+    <h3 class="widget-title">Tags</h3>
     <div class="widget">
       <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/macOS软件安全/">macOS软件安全</a></li></ul>
     </div>
@@ -659,7 +709,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Nuage de mot-clés</h3>
+    <h3 class="widget-title">Tag Cloud</h3>
     <div class="widget tagcloud">
       <a href="/tags/macOS软件安全/" style="font-size: 10px;">macOS软件安全</a>
     </div>
@@ -678,9 +728,13 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Articles récents</h3>
+    <h3 class="widget-title">Recent Posts</h3>
     <div class="widget">
       <ul>
+        
+          <li>
+            <a href="/2017/01/17/dmg/">DMG文件管理</a>
+          </li>
         
           <li>
             <a href="/2017/01/16/pkg/">PKG安装包的管理与文件格式分析</a>
@@ -696,10 +750,6 @@
         
           <li>
             <a href="/2017/01/13/macho/">Mach-O文件格式</a>
-          </li>
-        
-          <li>
-            <a href="/2017/01/12/install-software/">macOS平台软件的下载与安装</a>
           </li>
         
       </ul>
@@ -728,7 +778,7 @@
   <div class="outer">
     <div id="footer-info" class="inner">
       &copy; 2017 John Doe<br>
-      Propulsé by <a href="http://hexo.io/" target="_blank">Hexo</a>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
     </div>
   </div>
 </footer>
