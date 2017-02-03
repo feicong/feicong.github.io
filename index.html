@@ -52,9 +52,9 @@
       </nav>
       <nav id="sub-nav">
         
-          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="Flux RSS"></a>
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
         
-        <a id="nav-search-btn" class="nav-icon" title="Rechercher"></a>
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
       </nav>
       <div id="search-form-wrap">
         <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://feicong.github.io"></form>
@@ -95,7 +95,67 @@
     </div>
   	
     <footer class="article-footer">
-      <a data-url="https://feicong.github.io/2017/01/12/macos-software/" data-id="ciy0vhzcz00040avjzsxw1bpn" class="article-share-link">Partager</a>
+      <a data-url="https://feicong.github.io/2017/01/12/macos-software/" data-id="ciypfxiux0008iqvjxduaxr3g" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/macOS软件安全/">macOS软件安全</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-macho-unpack" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/02/03/macho-unpack/" class="article-date">
+  <time datetime="2017-02-03T05:40:56.000Z" itemprop="datePublished">2017-02-03</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2017/02/03/macho-unpack/">Mach-O脱壳技巧一则</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h3 id="0x1-应用场景"><a href="#0x1-应用场景" class="headerlink" title="0x1 应用场景"></a>0x1 应用场景</h3><p>此处讨论的脱壳不是class-dump这类脱壳，而是指第三方的软件压缩与加密壳，例如<code>upx</code>这类壳在iOS/macOS上的脱壳。</p>
+<p>App Store上的软件是不允许这类壳程序存在的，但在iOS越狱插件开发领域与macOS第三方软件提供商发布平台，自定义加密的MachO与dylib随处可见，到目前为此，没有在网络上看到关于这类程序脱壳方法的研究与讨论，本篇与大家讨论的就是在这种情况下，如何优雅的脱壳！</p>
+<h3 id="0x2-找寻脱壳点"><a href="#0x2-找寻脱壳点" class="headerlink" title="0x2 找寻脱壳点"></a>0x2 找寻脱壳点</h3><p>首先，虚拟机壳与混淆壳不在本篇讨论范围中，在iOS/macOS平台上，如果有虚拟机壳，也是很久以后的事情了，目前市在上见到最多的可能要属<code>upx</code>类的压缩型的壳，这类壳有一个明显的特点：壳初始运行完后，会将代码的控制权交回给原程序，并且内存中已经是存放好了完整的解密代码，脱壳的思路与Android平台上<code>upx</code>的脱壳一样，主要是找准脱壳时机！</p>
+<p>在Android时代，脱<code>upx</code>有一个优雅的方法，就是对<code>DT_INIT</code>的处理部分下断点，当<code>linker</code>加载完so，要执行<code>DT_INIT</code>段指向的初始化函数指针时，对内存中的so进行dump来达到脱壳的目的，到了macOS平台上，就采取同样的思路来开始脱壳探索。</p>
+<p>首先是编写测试代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div></pre></td><td class="code"><pre><div class="line">#import &lt;Foundation/Foundation.h&gt;</div><div class="line">#import &lt;time.h&gt;</div><div class="line">#import &lt;dlfcn.h&gt;</div><div class="line">#import &lt;stdio.h&gt;</div><div class="line">#import &lt;stdlib.h&gt;</div><div class="line">#import &lt;unistd.h&gt;</div><div class="line">#import &lt;fcntl.h&gt;</div><div class="line">#import &lt;string.h&gt;</div><div class="line"></div><div class="line">// clang -x objective-c -std=gnu99 -fobjc-arc -flat_namespace -dynamiclib -o ./libunderstandpatcher.dylib understandpatcher.m</div><div class="line"></div><div class="line">static double (*orig_difftime)(time_t time1, time_t time0) = NULL;</div><div class="line"></div><div class="line">typedef double (*orig_difftime_type)(time_t time1, time_t time0);</div><div class="line"></div><div class="line">__attribute__((constructor))</div><div class="line">void init_funcs()</div><div class="line">&#123;</div><div class="line">    printf(&quot;--------init funcs.--------\n&quot;);</div><div class="line">    void * handle = dlopen(&quot;libSystem.dylib&quot;, RTLD_NOW);</div><div class="line">    orig_difftime = (orig_difftime_type) dlsym(handle, &quot;difftime&quot;);</div><div class="line">    if(!orig_difftime) &#123;</div><div class="line">        printf(&quot;get difftime() addr error&quot;);</div><div class="line">        exit(-1);</div><div class="line">    &#125;</div><div class="line">    。。。</div><div class="line"></div><div class="line">    printf(&quot;--------init done--------\n&quot;);</div><div class="line">&#125;</div><div class="line">...</div></pre></td></tr></table></figure></p>
+<p>这只是代码的片断，在下写的macOS平台上<code>understand</code>程序的破解补丁，执行以下代码编译生成dylib：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">clang -x objective-c -std=gnu99 -fobjc-arc -flat_namespace -dynamiclib -o ./libunderstandpatcher.dylib understandpatcher.m</div></pre></td></tr></table></figure></p>
+<p>完事以后使用MachOView查看生成的dylib，看看<code>init_funcs()</code>以何种形式在Mach-O中存在，如图所示：<br><img src="/2017/02/03/macho-unpack/machoview.jpeg" alt="machoview"></p>
+<p>有两个地方需要注意：LC_FUNCTION_STARTS与<strong>DATA,</strong>mod_init_func。</p>
+<h4 id="0x2-1-LC-FUNCTION-STARTS"><a href="#0x2-1-LC-FUNCTION-STARTS" class="headerlink" title="0x2.1 LC_FUNCTION_STARTS"></a>0x2.1 LC_FUNCTION_STARTS</h4><p>这个加载命令是一个<code>macho_linkedit_data_command</code>结构体，从名称上判断，它是一个指向了函数起始执行的指针。它的内容如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ otool -l ./libunderstandpatcher.dylib | grep LC_FUNCTION_STARTS -A 3</div><div class="line">  cmd LC_FUNCTION_STARTS</div><div class="line">cmdsize 16</div><div class="line">dataoff 8504</div><div class="line">datasize 8</div></pre></td></tr></table></figure></p>
+<p><code>dataoff</code>字段的值8504（0x2138）,在MachOView中看到，它指向Function Starts第一项的<code>__init_funcs()</code>函数。</p>
+<h4 id="0x2-2-DATA-mod-init-func"><a href="#0x2-2-DATA-mod-init-func" class="headerlink" title="0x2.2 DATA,mod_init_func"></a>0x2.2 <strong>DATA,</strong>mod_init_func</h4><p><code>__DATA,__mod_init_func</code>是一个Section，它由编译器生成添加到MachO中，用来标识MachO加载完成后要执行的初始化函数。它的内容如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ otool -s __DATA __mod_init_func ./libunderstandpatcher.dylib</div><div class="line">./libunderstandpatcher.dylib:</div><div class="line">Contents of (__DATA,__mod_init_func) section</div><div class="line">0000000000001050	00 0d 00 00 00 00 00 00</div></pre></td></tr></table></figure></p>
+<p>位于文件偏移0x1050处指向的是一个个的初始化函数指针，这里只有一个，它的值是0xD00，其实就是<code>__init_funcs()</code>函数所在的地址：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div></pre></td><td class="code"><pre><div class="line">$ otool -tv ./libunderstandpatcher.dylib</div><div class="line">./libunderstandpatcher.dylib:</div><div class="line">(__TEXT,__text) section</div><div class="line">_init_funcs:</div><div class="line">0000000000000d00	pushq	%rbp</div><div class="line">0000000000000d01	movq	%rsp, %rbp</div><div class="line">0000000000000d04	subq	$0x40, %rsp</div><div class="line">0000000000000d08	leaq	0x1e9(%rip), %rdi</div><div class="line">0000000000000d0f	movb	$0x0, %al</div><div class="line">0000000000000d11	callq	0xe82</div><div class="line">0000000000000d16	leaq	0x1f8(%rip), %rdi</div><div class="line">0000000000000d1d	movl	$0x2, %esi</div><div class="line">0000000000000d22	movl	%eax, -0x14(%rbp)</div><div class="line">0000000000000d25	callq	0xe70</div><div class="line">0000000000000d2a	leaq	0x1f4(%rip), %rsi</div><div class="line">0000000000000d31	movq	%rax, -0x8(%rbp)</div><div class="line">0000000000000d35	movq	-0x8(%rbp), %rdi</div><div class="line">0000000000000d39	callq	0xe76</div><div class="line">0000000000000d3e	movq	%rax, 0x35b(%rip)</div><div class="line">0000000000000d45	cmpq	$0x0, 0x353(%rip)</div><div class="line">0000000000000d4d	jne	0xd6e</div><div class="line">0000000000000d53	leaq	0x1d4(%rip), %rdi</div><div class="line">0000000000000d5a	movb	$0x0, %al</div><div class="line">0000000000000d5c	callq	0xe82</div><div class="line">0000000000000d61	movl	$0xffffffff, %edi</div><div class="line">0000000000000d66	movl	%eax, -0x18(%rbp)</div><div class="line">0000000000000d69	callq	0xe7c</div><div class="line">0000000000000d6e	movq	0x323(%rip), %rax</div><div class="line">0000000000000d75	movq	0x304(%rip), %rsi</div><div class="line">0000000000000d7c	movq	%rax, %rdi</div><div class="line">0000000000000d7f	callq	0xe5e</div><div class="line">0000000000000d84	movq	%rax, %rdi</div><div class="line">0000000000000d87	callq	0xe64</div><div class="line">0000000000000d8c	xorl	%ecx, %ecx</div><div class="line">0000000000000d8e	movl	%ecx, %edi</div><div class="line">0000000000000d90	movq	%rax, -0x10(%rbp)</div><div class="line">0000000000000d94	movq	-0x10(%rbp), %rax</div><div class="line">0000000000000d98	movq	%rax, -0x20(%rbp)</div><div class="line">0000000000000d9c	callq	0xe88</div><div class="line">0000000000000da1	leaq	0x2b0(%rip), %rsi</div><div class="line">0000000000000da8	movq	0x2d9(%rip), %rdi</div><div class="line">0000000000000daf	movq	-0x20(%rbp), %rdx</div><div class="line">0000000000000db3	movq	%rdi, -0x28(%rbp)</div><div class="line">0000000000000db7	movq	%rdx, %rdi</div><div class="line">0000000000000dba	movq	-0x28(%rbp), %rdx</div><div class="line">0000000000000dbe	movq	%rsi, -0x30(%rbp)</div><div class="line">0000000000000dc2	movq	%rdx, %rsi</div><div class="line">0000000000000dc5	movq	%rax, %rdx</div><div class="line">0000000000000dc8	movq	-0x30(%rbp), %rcx</div><div class="line">0000000000000dcc	callq	0xe5e</div><div class="line">0000000000000dd1	movq	-0x10(%rbp), %rax</div><div class="line">0000000000000dd5	movq	0x2b4(%rip), %rsi</div><div class="line">0000000000000ddc	movq	%rax, %rdi</div><div class="line">0000000000000ddf	callq	0xe5e</div><div class="line">0000000000000de4	leaq	0x178(%rip), %rdi</div><div class="line">0000000000000deb	movb	%al, -0x31(%rbp)</div><div class="line">0000000000000dee	movb	$0x0, %al</div><div class="line">0000000000000df0	callq	0xe82</div><div class="line">0000000000000df5	xorl	%r8d, %r8d</div><div class="line">0000000000000df8	movl	%r8d, %esi</div><div class="line">0000000000000dfb	leaq	-0x10(%rbp), %rcx</div><div class="line">0000000000000dff	movq	%rcx, %rdi</div><div class="line">0000000000000e02	movl	%eax, -0x38(%rbp)</div><div class="line">0000000000000e05	callq	0xe6a</div><div class="line">0000000000000e0a	addq	$0x40, %rsp</div><div class="line">0000000000000e0e	popq	%rbp</div><div class="line">0000000000000e0f	retq</div></pre></td></tr></table></figure></p>
+<h4 id="0x2-3-dyld执行初始化函数过程"><a href="#0x2-3-dyld执行初始化函数过程" class="headerlink" title="0x2.3 dyld执行初始化函数过程"></a>0x2.3 dyld执行初始化函数过程</h4><p><code>dyld</code>如何执行初始化函数才是我们需要重点关注的。下载<code>dyld</code>源码查看，它启动运行的第一个方法<code>dyldbootstrap::start()</code>代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div></pre></td><td class="code"><pre><div class="line">uintptr_t start(const struct macho_header* appsMachHeader, int argc, const char* argv[],</div><div class="line">				intptr_t slide, const struct macho_header* dyldsMachHeader,</div><div class="line">				uintptr_t* startGlue)</div><div class="line">&#123;</div><div class="line">	// if kernel had to slide dyld, we need to fix up load sensitive locations</div><div class="line">	// we have to do this before using any global variables</div><div class="line">	if ( slide != 0 ) &#123;</div><div class="line">		rebaseDyld(dyldsMachHeader, slide);</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	// allow dyld to use mach messaging</div><div class="line">	mach_init();</div><div class="line"></div><div class="line">	// kernel sets up env pointer to be just past end of agv array</div><div class="line">	const char** envp = &amp;argv[argc+1];</div><div class="line"></div><div class="line">	// kernel sets up apple pointer to be just past end of envp array</div><div class="line">	const char** apple = envp;</div><div class="line">	while(*apple != NULL) &#123; ++apple; &#125;</div><div class="line">	++apple;</div><div class="line"></div><div class="line">	// set up random value for stack canary</div><div class="line">	__guard_setup(apple);</div><div class="line"></div><div class="line">#if DYLD_INITIALIZER_SUPPORT</div><div class="line">	// run all C++ initializers inside dyld</div><div class="line">	runDyldInitializers(dyldsMachHeader, slide, argc, argv, envp, apple);</div><div class="line">#endif</div><div class="line"></div><div class="line">	// now that we are done bootstrapping dyld, call dyld&apos;s main</div><div class="line">	uintptr_t appsSlide = slideOfMainExecutable(appsMachHeader);</div><div class="line">	return dyld::_main(appsMachHeader, appsSlide, argc, argv, envp, apple, startGlue);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>在开启<code>DYLD_INITIALIZER_SUPPORT</code>的情况下，会调用<code>runDyldInitializers()</code>执行Mach-O的初始化方法，i当然，目前<code>dyld</code>是支持初始化方法执行的，<code>runDyldInitializers()</code>代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">static void runDyldInitializers(const struct macho_header* mh, intptr_t slide, int argc, const char* argv[], const char* envp[], const char* apple[])</div><div class="line">&#123;</div><div class="line">	for (const Initializer* p = &amp;inits_start; p &lt; &amp;inits_end; ++p) &#123;</div><div class="line">		(*p)(argc, argv, envp, apple);</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>这段代码从<code>inits_start</code>到<code>inits_end</code>之间循环获取<code>Initializer</code>方法并执行，<code>Initializer</code>与这两个地址定义如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">typedef void (*Initializer)(int argc, const char* argv[], const char* envp[], const char* apple[]);</div><div class="line"></div><div class="line">extern const Initializer  inits_start  __asm(&quot;section$start$__DATA$__mod_init_func&quot;);</div><div class="line">extern const Initializer  inits_end    __asm(&quot;section$end$__DATA$__mod_init_func&quot;);</div></pre></td></tr></table></figure></p>
+<p>可以看出，<code>dyld</code>定位与执行初始化方法是通过”<strong>DATA$</strong>mod_init_func”节区完成的。</p>
+<p>了解了<code>dyld</code>加载执行初始化方法的地方，接下来就是如何脱壳了！</p>
+<h3 id="0x3-如何动手"><a href="#0x3-如何动手" class="headerlink" title="0x3 如何动手"></a>0x3 如何动手</h3><p>壳程序加载完成，第一件事要做的就是自己或者调用<code>dyld</code>来执行初始化方法，因此，使用任意一款调试器对<code>runDyldInitializers()</code>下断即可。</p>
+<p>断点到达后对内存中的MachO进行dump就完成脱壳了，当然对于防内存dump也是有一些tricks的，逆向搞过<code>Hopper</code>主程序的人就会有感触，以后有机会与大家讨论一下！</p>
+<p>最后，Mach-O的dump与ELF不太一样，更加简单与完整，这里不再赘述了！</p>
+
+      
+    </div>
+  	
+    <footer class="article-footer">
+      <a data-url="https://feicong.github.io/2017/02/03/macho-unpack/" data-id="ciypfxiuq0004iqvjd42rgg38" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/macOS软件安全/">macOS软件安全</a></li></ul>
@@ -145,7 +205,7 @@
     </div>
   	
     <footer class="article-footer">
-      <a data-url="https://feicong.github.io/2017/01/17/dmg/" data-id="ciy0vhzch00000avjgkblyxul" class="article-share-link">Partager</a>
+      <a data-url="https://feicong.github.io/2017/01/17/dmg/" data-id="ciypfxiud0000iqvj7vhp1d69" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/macOS软件安全/">macOS软件安全</a></li></ul>
@@ -303,7 +363,7 @@
     </div>
   	
     <footer class="article-footer">
-      <a data-url="https://feicong.github.io/2017/01/16/pkg/" data-id="ciy0vhzdc000a0avj2i3rjcur" class="article-share-link">Partager</a>
+      <a data-url="https://feicong.github.io/2017/01/16/pkg/" data-id="ciypfxiv4000fiqvjb69h7235" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/macOS软件安全/">macOS软件安全</a></li></ul>
@@ -360,7 +420,7 @@
     </div>
   	
     <footer class="article-footer">
-      <a data-url="https://feicong.github.io/2017/01/15/staticlib/" data-id="ciy0vhzdh000d0avj5kor0te7" class="article-share-link">Partager</a>
+      <a data-url="https://feicong.github.io/2017/01/15/staticlib/" data-id="ciypfxiv3000diqvjck4x8kbn" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/macOS软件安全/">macOS软件安全</a></li></ul>
@@ -448,7 +508,7 @@
     </div>
   	
     <footer class="article-footer">
-      <a data-url="https://feicong.github.io/2017/01/14/dylib/" data-id="ciy0vhzd800080avjlpwbjgs7" class="article-share-link">Partager</a>
+      <a data-url="https://feicong.github.io/2017/01/14/dylib/" data-id="ciypfxiun0003iqvjzadplepx" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/macOS软件安全/">macOS软件安全</a></li></ul>
@@ -566,7 +626,7 @@
     </div>
   	
     <footer class="article-footer">
-      <a data-url="https://feicong.github.io/2017/01/13/macho/" data-id="ciy0vhzcq00030avjzxeax4uh" class="article-share-link">Partager</a>
+      <a data-url="https://feicong.github.io/2017/01/13/macho/" data-id="ciypfxiuz000aiqvjr0qgosyg" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/macOS软件安全/">macOS软件安全</a></li></ul>
@@ -636,7 +696,7 @@
     </div>
   	
     <footer class="article-footer">
-      <a data-url="https://feicong.github.io/2017/01/12/install-software/" data-id="ciy0vhzcl00010avj5hzfgb1h" class="article-share-link">Partager</a>
+      <a data-url="https://feicong.github.io/2017/01/12/install-software/" data-id="ciypfxiui0001iqvjzy0thyhf" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/macOS软件安全/">macOS软件安全</a></li></ul>
@@ -678,7 +738,7 @@
     </div>
   	
     <footer class="article-footer">
-      <a data-url="https://feicong.github.io/2017/01/11/new-chapter/" data-id="ciy0vhzd200050avjupxqlfp5" class="article-share-link">Partager</a>
+      <a data-url="https://feicong.github.io/2017/01/11/new-chapter/" data-id="ciypfxius0005iqvj2lncssjk" class="article-share-link">Share</a>
       
       
     </footer>
@@ -699,7 +759,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Mot-clés</h3>
+    <h3 class="widget-title">Tags</h3>
     <div class="widget">
       <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/macOS软件安全/">macOS软件安全</a></li></ul>
     </div>
@@ -709,7 +769,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Nuage de mot-clés</h3>
+    <h3 class="widget-title">Tag Cloud</h3>
     <div class="widget tagcloud">
       <a href="/tags/macOS软件安全/" style="font-size: 10px;">macOS软件安全</a>
     </div>
@@ -720,7 +780,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Archives</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">January 2017</a></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/02/">February 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">January 2017</a></li></ul>
     </div>
   </div>
 
@@ -728,9 +788,13 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Articles récents</h3>
+    <h3 class="widget-title">Recent Posts</h3>
     <div class="widget">
       <ul>
+        
+          <li>
+            <a href="/2017/02/03/macho-unpack/">Mach-O脱壳技巧一则</a>
+          </li>
         
           <li>
             <a href="/2017/01/17/dmg/">DMG文件管理</a>
@@ -746,10 +810,6 @@
         
           <li>
             <a href="/2017/01/14/dylib/">dylib动态库加载过程分析</a>
-          </li>
-        
-          <li>
-            <a href="/2017/01/13/macho/">Mach-O文件格式</a>
           </li>
         
       </ul>
@@ -778,7 +838,7 @@
   <div class="outer">
     <div id="footer-info" class="inner">
       &copy; 2017 John Doe<br>
-      Propulsé by <a href="http://hexo.io/" target="_blank">Hexo</a>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
     </div>
   </div>
 </footer>
