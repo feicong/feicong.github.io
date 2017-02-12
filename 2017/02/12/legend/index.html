@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Android免Root环境下Hook框架Legend原理分析 | fEICOnG&#39;s Blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="0x1 应用场景现如今，免Root环境下的逆向分析已经成为一种潮流！
+在2015年之前的iOS软件逆向工程领域，要想对iOS平台上的软件进行逆向工程分析，越狱iOS设备与安装Cydia是必须的！几乎绝大多数的逆向相关的动态调试工具、Hook注入框架都依赖于获取IOS设备的最高访问权限，就技术本身上而言，对当前程序进行Hook与动态调试，只需要拥有与当前程序相同的权限即可，理论上无需对设备进行Roo">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android免Root环境下Hook框架Legend原理分析">
+<meta property="og:url" content="https://feicong.github.io/2017/02/12/legend/index.html">
+<meta property="og:site_name" content="fEICOnG's Blog">
+<meta property="og:description" content="0x1 应用场景现如今，免Root环境下的逆向分析已经成为一种潮流！
+在2015年之前的iOS软件逆向工程领域，要想对iOS平台上的软件进行逆向工程分析，越狱iOS设备与安装Cydia是必须的！几乎绝大多数的逆向相关的动态调试工具、Hook注入框架都依赖于获取IOS设备的最高访问权限，就技术本身上而言，对当前程序进行Hook与动态调试，只需要拥有与当前程序相同的权限即可，理论上无需对设备进行Roo">
+<meta property="og:updated_time" content="2017-02-12T08:52:35.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android免Root环境下Hook框架Legend原理分析">
+<meta name="twitter:description" content="0x1 应用场景现如今，免Root环境下的逆向分析已经成为一种潮流！
+在2015年之前的iOS软件逆向工程领域，要想对iOS平台上的软件进行逆向工程分析，越狱iOS设备与安装Cydia是必须的！几乎绝大多数的逆向相关的动态调试工具、Hook注入框架都依赖于获取IOS设备的最高访问权限，就技术本身上而言，对当前程序进行Hook与动态调试，只需要拥有与当前程序相同的权限即可，理论上无需对设备进行Roo">
+  
+    <link rel="alternate" href="/atom.xml" title="fEICOnG&#39;s Blog" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">fEICOnG&#39;s Blog</a>
+      </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/" id="subtitle">RE makes life easier</a>
+        </h2>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Søk"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://feicong.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-legend" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/02/12/legend/" class="article-date">
+  <time datetime="2017-02-12T05:37:22.000Z" itemprop="datePublished">2017-02-12</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Android免Root环境下Hook框架Legend原理分析
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h3 id="0x1-应用场景"><a href="#0x1-应用场景" class="headerlink" title="0x1 应用场景"></a>0x1 应用场景</h3><p>现如今，免Root环境下的逆向分析已经成为一种潮流！</p>
+<p>在2015年之前的iOS软件逆向工程领域，要想对iOS平台上的软件进行逆向工程分析，越狱iOS设备与安装Cydia是必须的！几乎绝大多数的逆向相关的动态调试工具、Hook注入框架都依赖于获取IOS设备的最高访问权限，就技术本身上而言，对当前程序进行Hook与动态调试，只需要拥有与当前程序相同的权限即可，理论上无需对设备进行Root越狱，实际上，在2015年就出现了在非越狱设备上进行插件开发的实用案例，2016年的iOS软件逆向工程界，更是一发不可收拾，各种名越狱环境下的逆向工具与逆向技巧被安全人员所发掘，在没有越狱的iOS设备上进行软件的动态调试与逆向工程已经是主流的趋势胃。这样的情况下，最直接的影响是安全研究人员不再对iOS设备越狱有着强烈的追求了，越狱需求的下降可能会直接影响到iOS设备越狱工具的发布与技术的更新迭代。</p>
+<p>同样的，在Android设备的免Root环境下，进行软件动态调试与逆向工程分析的需求更加强烈。免Root环境下动态调试与逆向工程就技术本质而言是可行的，安全研究人员的智慧更是有力的证明了这一点，LBE发布免Root环境下APK双开工具平行空间就是最好的例子，它是打破逆向工程技术的原始格局的第一个大锤！随后的，各种APK多开框架、免Root环境下的Hook、免Root环境下的动态调试等技术都被研究人员公开，这是Android软件逆向工程界的福音，逆向工程人员在以后的逆向分析过程中，可能再也不需要为自己的手机能否越狱而感到苦恼，手上在吃灰淘汰的Android小米机可能就是你的逆向必备工具之一。</p>
+<p>好了，说了这么多，无非是告诉大家，开发技术在更新迭代，软件的逆向工程技术也在不停的更新，各位研究软件安全的朋友们，你们跟上了时代的脚步吗？！</p>
+<h3 id="0x2-Legend框架简介"><a href="#0x2-Legend框架简介" class="headerlink" title="0x2 Legend框架简介"></a>0x2 Legend框架简介</h3><p><code>Legend</code>是Lody开源的一个Android免Root环境下的一个APK Hook框架，代码放在github上：<a href="https://github.com/asLody/legend。" target="_blank" rel="external">https://github.com/asLody/legend。</a> 该框架代码设计简洁，通用性高，适合逆向工程时一些Hook场景。</p>
+<p>先来看看如何使用它。框架提供了两种使用方法：基于<code>Annotation</code>注解与代码直接调用。基于<code>Annotation</code>注解的Hook技术不是第一次被发现了，在Java开发的世界里，这种技术被广泛使用，大名鼎鼎的基于AOP开发的<code>Aspectj</code>就大量使用这种技术。使用<code>Annotation</code>方式编写的Java代码有着很强的灵活与扩展性。<code>Legend</code>中<code>Annotation</code>方式的Hook这样使用：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">@Hook(&quot;android.app.Activity::startActivity@android.content.Intent&quot;)</div><div class="line">public static void Activity_startActivity(Activity thiz, Intent intent) &#123;</div><div class="line">  if (!ALLOW_LAUNCH_ACTIVITY) &#123;</div><div class="line">    Toast.makeText(thiz, &quot;I am sorry to turn your Activity down :)&quot;, Toast.LENGTH_SHORT).show();</div><div class="line">  &#125; else &#123;</div><div class="line">    HookManager.getDefault().callSuper(thiz, intent);</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p><code>@Hook(&quot;xxx&quot;)</code>部分指明需要Hook的类与方法以及方法的签名，此处的<code>Activity_startActivity()</code>是自己实现的替换<code>android.app.Activity::startActivity()</code>的方法，<code>HookManager.getDefault().callSuper(thiz, intent);</code>调用是调用原方法。</p>
+<p>这种方式Hook的方法，需要执行一次Hook应用操作来激活所有注解Hook，方法是执行下面的方法，传入的YourClass.class是包含了注解的类：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">HookManager.getDefault().applyHooks(YourClass.class);</div></pre></td></tr></table></figure></p>
+<p>另一种代码方式进行Hook使用起来更简单，Hook操作只需要一行代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">HookManager.getDefault().hookMethod(originMethod, hookMethod);</div></pre></td></tr></table></figure></p>
+<p>这是<code>Legend</code>提供的demo展示的一个完整实例：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div></pre></td><td class="code"><pre><div class="line">package com.legend.demo;</div><div class="line"></div><div class="line">import android.app.Activity;</div><div class="line">import android.app.Application;</div><div class="line">import android.content.Context;</div><div class="line">import android.content.Intent;</div><div class="line">import android.telephony.TelephonyManager;</div><div class="line">import android.widget.Toast;</div><div class="line"></div><div class="line">import com.lody.legend.Hook;</div><div class="line">import com.lody.legend.HookManager;</div><div class="line"></div><div class="line">/**</div><div class="line"> * @author Lody</div><div class="line"> * @version 1.0</div><div class="line"> */</div><div class="line">public class App extends Application &#123;</div><div class="line"></div><div class="line">    public static boolean ENABLE_TOAST = true;</div><div class="line">    public static boolean ALLOW_LAUNCH_ACTIVITY = true;</div><div class="line"></div><div class="line">    @Override</div><div class="line">    protected void attachBaseContext(Context base) &#123;</div><div class="line">        super.attachBaseContext(base);</div><div class="line">        HookManager.getDefault().applyHooks(App.class);</div><div class="line"></div><div class="line">    &#125;</div><div class="line"></div><div class="line">    @Hook(&quot;android.app.Application::onCreate&quot;)</div><div class="line">    public static void Application_onCreate(Application app) &#123;</div><div class="line">        Toast.makeText(app, &quot;Application =&gt; onCreate()&quot;, Toast.LENGTH_SHORT).show();</div><div class="line">        HookManager.getDefault().callSuper(app);</div><div class="line">    &#125;</div><div class="line"></div><div class="line"></div><div class="line">    @Hook(&quot;android.telephony.TelephonyManager::getSimSerialNumber&quot;)</div><div class="line">    public static String TelephonyManager_getSimSerialNumber(TelephonyManager thiz) &#123;</div><div class="line">         return &quot;110&quot;;</div><div class="line">    &#125;</div><div class="line"></div><div class="line"></div><div class="line">    @Hook(&quot;android.widget.Toast::show&quot;)</div><div class="line">    public static void Toast_show(Toast toast) &#123;</div><div class="line">        if (ENABLE_TOAST) &#123;</div><div class="line">            HookManager.getDefault().callSuper(toast);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    @Hook(&quot;android.app.Activity::startActivity@android.content.Intent&quot;)</div><div class="line">    public static void Activity_startActivity(Activity activity, Intent intent) &#123;</div><div class="line">        if (!ALLOW_LAUNCH_ACTIVITY) &#123;</div><div class="line">            Toast.makeText(activity, &quot;I am sorry to turn your Activity down :)&quot;, Toast.LENGTH_SHORT).show();</div><div class="line">        &#125;else &#123;</div><div class="line">            HookManager.getDefault().callSuper(activity, intent);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h3 id="0x3-原理分析"><a href="#0x3-原理分析" class="headerlink" title="0x3 原理分析"></a>0x3 原理分析</h3><p>先来看看Hook注解的实现：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">// Legend/legendCore/src/main/java/com/lody/legend/Hook.java</div><div class="line"></div><div class="line">package com.lody.legend;</div><div class="line"></div><div class="line">import java.lang.annotation.ElementType;</div><div class="line">import java.lang.annotation.Retention;</div><div class="line">import java.lang.annotation.RetentionPolicy;</div><div class="line">import java.lang.annotation.Target;</div><div class="line"></div><div class="line">/**</div><div class="line"> * @author Lody</div><div class="line"> * @version 1.0</div><div class="line"> */</div><div class="line">@Target(ElementType.METHOD)</div><div class="line">@Retention(RetentionPolicy.RUNTIME)</div><div class="line">public @interface Hook &#123;</div><div class="line">    String value() default &quot;&quot;;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>｀@Target(ElementType.METHOD)｀指明Hook注解用于修饰类中的<code>Method</code>，与之类似的还有<code>@Target(ElementType.FIELD)</code>用来修饰类中的<code>Field</code>。如果想让注解同时修饰类的<code>Field</code>与<code>Method</code>，可以这么写：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">@Target(&#123;ElementType.FIELD, ElementType.METHOD&#125;)</div><div class="line">public @interface Hook&#123;&#125;</div><div class="line">    ......</div></pre></td></tr></table></figure></p>
+<p><code>@Retention(RetentionPolicy.RUNTIME)</code>指明Hook注解以何种形式进行保留。<code>RetentionPolicy</code>是一个enum类型，声明如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">public enum RetentionPolicy &#123;   </div><div class="line">   SOURCE,   </div><div class="line">   CLASS,   </div><div class="line">   RUNTIME   </div><div class="line">  &#125;</div></pre></td></tr></table></figure></p>
+<p>｀SOURCE｀表明该注解类型的信息只保留在程序源码里，源码经过编译之后，注解的数据就会消失;<code>CLASS</code>表明注解类型的信息除了保留在程序源码里，同时也保留在编译好的class文件里面，但在执行的时候，并不会把这些信息加载到内存中去；<code>RUNTIME</code>是最大范围的保留，表示同时在源码与编译好的class文件中保留信息，并且在执行的时候会把这些信息加载到内存中去。</p>
+<p>定义好了Hook注解，看它是如何使用的，这就是<code>HookManager.getDefault().applyHooks()</code>方法要做的工作，它的代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div></pre></td><td class="code"><pre><div class="line">// Legend/legendCore/src/main/java/com/lody/legend/HookManager.java</div><div class="line">public void applyHooks(Class&lt;?&gt; holdClass) &#123;</div><div class="line">    for (Method hookMethod : holdClass.getDeclaredMethods()) &#123;</div><div class="line">        Hook hook = hookMethod.getAnnotation(Hook.class);</div><div class="line">        if (hook != null) &#123;</div><div class="line">            String statement = hook.value();</div><div class="line">            String[] splitValues = statement.split(&quot;::&quot;);</div><div class="line">            if (splitValues.length == 2) &#123;</div><div class="line">                String className = splitValues[0];</div><div class="line">                String[] methodNameWithSignature = splitValues[1].split(&quot;@&quot;);</div><div class="line">                if (methodNameWithSignature.length &lt;= 2) &#123;</div><div class="line">                    String methodName = methodNameWithSignature[0];</div><div class="line">                    String signature = methodNameWithSignature.length == 2 ? methodNameWithSignature[1] : &quot;&quot;;</div><div class="line">                    String[] paramList = signature.split(&quot;#&quot;);</div><div class="line">                    if (paramList[0].equals(&quot;&quot;)) &#123;</div><div class="line">                        paramList = new String[0];</div><div class="line">                    &#125;</div><div class="line">                    try &#123;</div><div class="line">                        Class&lt;?&gt; clazz = Class.forName(className);</div><div class="line">                        boolean isResolve = false;</div><div class="line">                        for (Method method : clazz.getDeclaredMethods()) &#123;</div><div class="line">                            if (method.getName().equals(methodName)) &#123;</div><div class="line">                                Class&lt;?&gt;[] types = method.getParameterTypes();</div><div class="line">                                if (paramList.length == types.length) &#123;</div><div class="line">                                    boolean isMatch = true;</div><div class="line">                                    for (int N = 0; N &lt; types.length; N++) &#123;</div><div class="line">                                        if (!types[N].getName().equals(paramList[N])) &#123;</div><div class="line">                                            isMatch = false;</div><div class="line">                                            break;</div><div class="line">                                        &#125;</div><div class="line">                                    &#125;</div><div class="line">                                    if (isMatch) &#123;</div><div class="line">                                        hookMethod(method, hookMethod);</div><div class="line">                                        isResolve = true;</div><div class="line">                                        Logger.d(&quot;[+++] %s have hooked.&quot;, method.getName());</div><div class="line">                                    &#125;</div><div class="line">                                &#125;</div><div class="line">                            &#125;</div><div class="line">                            if (isResolve) &#123;</div><div class="line">                                break;</div><div class="line">                            &#125;</div><div class="line">                        &#125;</div><div class="line">                        if (!isResolve) &#123;</div><div class="line">                            Logger.e(&quot;[---] Cannot resolve Method : %s.&quot;, Arrays.toString(methodNameWithSignature));</div><div class="line">                        &#125;</div><div class="line">                    &#125; catch (Throwable e) &#123;</div><div class="line">                        Logger.e(&quot;[---] Error to Load Hook Method From : %s.&quot; , hookMethod.getName());</div><div class="line">                        e.printStackTrace();</div><div class="line">                    &#125;</div><div class="line"></div><div class="line">                &#125;else &#123;</div><div class="line">                    Logger.e(&quot;[---] Can&apos;t split method and signature : %s.&quot;, Arrays.toString(methodNameWithSignature));</div><div class="line">                &#125;</div><div class="line">            &#125;else &#123;</div><div class="line">                Logger.e(&quot;[---] Can&apos;t understand your statement : [%s].&quot;, statement);</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>该方法遍历类的所有方法，查找匹配注解信息中指定的方法，方法是：对于需要Hook的<code>Class</code>类<code>holdClass</code>，调用它的<code>getDeclaredMethods()</code>获取所有声明的方法，依次调用每个类的方法的<code>getAnnotation()</code>获取注解信息，取到的注解信息保存在<code>String</code>类型的<code>statement</code>变量中，类与完整的方法签名以“::”进行分隔，方法签名中的方法名与参数签名使用“@”进行分隔，参数签名中每个参数之间使用“#”进行分隔，取完一个方法所有的信息后，与类中的方法进行比较，如果完全匹配说明找到了需要Hook的方法，这个时候，调用<code>hookMethod()</code>方法进行Hook操作，注意这里的<code>hookMethod()</code>方法，即<code>Legend</code>框架支持的第二种Hook方式。</p>
+<p><code>hookMethod()</code>调用<code>Runtime.isArt()</code>判断当前代码执行在<code>Art</code>还是<code>Dalvik</code>模式，如果是<code>Art</code>模式，执行<code>hookMethodArt()</code>来完成Hook操作，如果是<code>Dalvik</code>模式，执行<code>hookMethodDalvik()</code>完成Hook。</p>
+<p><code>Runtime.isArt()</code>的代码只有一行，即判断虚拟机版本字符串是否以字符2开头，如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">public static boolean isArt() &#123;</div><div class="line">    return getVmVersion().startsWith(&quot;2&quot;);</div><div class="line">&#125;</div><div class="line"></div><div class="line">public static String getVmVersion() &#123;</div><div class="line">    return System.getProperty(&quot;java.vm.version&quot;);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>执行完Hook后会返回一个<code>backupMethod</code>，这是一个原始方法的备份，最后将<code>backupMethod</code>放入以<code>methodName</code>命令的<code>backupList</code>，在<code>methodNameToBackupMethodsMap</code>备份就完事了。</p>
+<p>接下来看看<code>hookMethodArt()</code>都干了啥：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div></pre></td><td class="code"><pre><div class="line">private static Method hookMethodArt(Method origin, Method hook) &#123;</div><div class="line">        ArtMethod artOrigin = ArtMethod.of(origin);</div><div class="line">        ArtMethod artHook = ArtMethod.of(hook);</div><div class="line">        Method backup = artOrigin.backup().getMethod();</div><div class="line">        backup.setAccessible(true);</div><div class="line">        long originPointFromQuickCompiledCode = artOrigin.getEntryPointFromQuickCompiledCode();</div><div class="line">        long originEntryPointFromJni = artOrigin.getEntryPointFromJni();</div><div class="line">        long originEntryPointFromInterpreter = artOrigin.getEntryPointFromInterpreter();</div><div class="line">        long originDeclaringClass = artOrigin.getDeclaringClass();</div><div class="line">        long originAccessFlags = artOrigin.getAccessFlags();</div><div class="line">        long originDexCacheResolvedMethods = artOrigin.getDexCacheResolvedMethods();</div><div class="line">        long originDexCacheResolvedTypes = artOrigin.getDexCacheResolvedTypes();</div><div class="line">        long originDexCodeItemOffset = artOrigin.getDexCodeItemOffset();</div><div class="line">        long originDexMethodIndex = artOrigin.getDexMethodIndex();</div><div class="line"></div><div class="line">        long hookPointFromQuickCompiledCode = artHook.getEntryPointFromQuickCompiledCode();</div><div class="line">        long hookEntryPointFromJni = artHook.getEntryPointFromJni();</div><div class="line">        long hookEntryPointFromInterpreter = artHook.getEntryPointFromInterpreter();</div><div class="line">        long hookDeclaringClass = artHook.getDeclaringClass();</div><div class="line">        long hookAccessFlags = artHook.getAccessFlags();</div><div class="line">        long hookDexCacheResolvedMethods = artHook.getDexCacheResolvedMethods();</div><div class="line">        long hookDexCacheResolvedTypes = artHook.getDexCacheResolvedTypes();</div><div class="line">        long hookDexCodeItemOffset = artHook.getDexCodeItemOffset();</div><div class="line">        long hookDexMethodIndex = artHook.getDexMethodIndex();</div><div class="line"></div><div class="line">        ByteBuffer hookInfo = ByteBuffer.allocate(ART_HOOK_INFO_SIZE);</div><div class="line">        hookInfo.putLong(originPointFromQuickCompiledCode);</div><div class="line">        hookInfo.putLong(originEntryPointFromJni);</div><div class="line">        hookInfo.putLong(originEntryPointFromInterpreter);</div><div class="line">        hookInfo.putLong(originDeclaringClass);</div><div class="line">        hookInfo.putLong(originAccessFlags);</div><div class="line">        hookInfo.putLong(originDexCacheResolvedMethods);</div><div class="line">        hookInfo.putLong(originDexCacheResolvedTypes);</div><div class="line">        hookInfo.putLong(originDexCodeItemOffset);</div><div class="line">        hookInfo.putLong(originDexMethodIndex);</div><div class="line"></div><div class="line">        hookInfo.putLong(hookPointFromQuickCompiledCode);</div><div class="line">        hookInfo.putLong(hookEntryPointFromJni);</div><div class="line">        hookInfo.putLong(hookEntryPointFromInterpreter);</div><div class="line">        hookInfo.putLong(hookDeclaringClass);</div><div class="line">        hookInfo.putLong(hookAccessFlags);</div><div class="line">        hookInfo.putLong(hookDexCacheResolvedMethods);</div><div class="line">        hookInfo.putLong(hookDexCacheResolvedTypes);</div><div class="line">        hookInfo.putLong(hookDexCodeItemOffset);</div><div class="line">        hookInfo.putLong(hookDexMethodIndex);</div><div class="line"></div><div class="line">        artOrigin.setEntryPointFromQuickCompiledCode(hookPointFromQuickCompiledCode);</div><div class="line">        artOrigin.setEntryPointFromInterpreter(hookEntryPointFromInterpreter);</div><div class="line">        artOrigin.setDeclaringClass(hookDeclaringClass);</div><div class="line">        artOrigin.setDexCacheResolvedMethods(hookDexCacheResolvedMethods);</div><div class="line">        artOrigin.setDexCacheResolvedTypes(hookDexCacheResolvedTypes);</div><div class="line">        artOrigin.setDexCodeItemOffset((int) hookDexCodeItemOffset);</div><div class="line">        artOrigin.setDexMethodIndex((int) hookDexMethodIndex);</div><div class="line"></div><div class="line">        int accessFlags = origin.getModifiers();</div><div class="line">        if (Modifier.isNative(accessFlags)) &#123;</div><div class="line">            accessFlags &amp;= ~ Modifier.NATIVE;</div><div class="line">            artOrigin.setAccessFlags(accessFlags);</div><div class="line">        &#125;</div><div class="line">        long memoryAddress = Memory.alloc(ART_HOOK_INFO_SIZE);</div><div class="line">        Memory.write(memoryAddress,hookInfo.array());</div><div class="line">        artOrigin.setEntryPointFromJni(memoryAddress);</div><div class="line"></div><div class="line">        return backup;</div><div class="line">    &#125;</div></pre></td></tr></table></figure></p>
+<p>原方法与替换的方法分别为<code>artOrigin</code>与<code>artHook</code>，执行<code>artOrigin</code>的<code>backup()</code>完成方法的备份操作，<code>backup()</code>内部通过反射获取<code>AbstractMethod</code>类的<code>artMethod</code>字段，然后使用当前类的<code>method</code>进行填充，实际的操作就是复制一份当前类的<code>method</code>，此处不展开它的代码。</p>
+<p>接下来的代码是获取<code>artOrigin</code>与<code>artHook</code>的重要字段，然后构造<code>ByteBuffer</code>类型的<code>hookInfo</code>，最后调用以下三行代码来完成Hook：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">long memoryAddress = Memory.alloc(ART_HOOK_INFO_SIZE);</div><div class="line">Memory.write(memoryAddress,hookInfo.array());</div><div class="line">artOrigin.setEntryPointFromJni(memoryAddress);</div></pre></td></tr></table></figure></p>
+<p><code>ArtMethod</code>在底层的内存结构定义仅次于Android源码的“art/runtime/art_method.h”文件，不同系统版本的Android这个结构体都可能会发现变化，为了保持兼容性，<code>Legend</code>在Java层手动定义保存了它们的字段偏移信息，与“Legend/legendCore/src/main/java/com/lody/legend/art/ArtMethod.java”文件保存在同一目录，在调用<code>ArtMethod::of()</code>方法构造<code>ArtMethod</code>时，会根据不同的系统版本来构造不同的对象。</p>
+<p><code>Memory.write()</code>方法底层调用的<code>LegendNative.memput()</code>，它是一个native方法，对应的实现是<code>android_memput()</code>，代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">// Legend/Native/jni/legend_native.cpp</div><div class="line">void android_memput(JNIEnv * env, jclass clazz, jlong dest, jbyteArray src) &#123;</div><div class="line">    jbyte *srcPnt = env-&gt;GetByteArrayElements(src, 0);</div><div class="line">    jsize length = env-&gt;GetArrayLength(src);</div><div class="line">    unsigned char * destPnt = (unsigned char *)dest;</div><div class="line">    for(int i = 0; i &lt; length; ++i) &#123;</div><div class="line">        destPnt[i] = srcPnt[i];</div><div class="line">    &#125;</div><div class="line">    env-&gt;ReleaseByteArrayElements(src, srcPnt, 0);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>可以看出，馐的内存写操作是直接使用底层指定长度的字节流覆盖的，简单与暴力，而能够这样操作的原因，是当前操作的内存是自己的内存，想怎么干就怎么干！</p>
+<p><code>setEntryPointFromJni()</code>直接将原方法起始地址的指针内容，通过构造的<code>memoryAddress</code>覆盖写入！如此这般，<code>Art</code>模式下的Hook就完成了，当然，这其中很多小细节没有讲到，读者可以看行阅读它的代码。</p>
+<p>接下来看看<code>Dalvik</code>下的Hook方法<code>hookMethodDalvik()</code>都干了啥：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div></pre></td><td class="code"><pre><div class="line">// Legend/legendCore/src/main/java/com/lody/legend/HookManager.java</div><div class="line">private static Method hookMethodDalvik(Method origin, Method hook) &#123;</div><div class="line">    DalvikMethodStruct dvmOriginMethod = DalvikMethodStruct.of(origin);</div><div class="line">    DalvikMethodStruct dvmHookMethod = DalvikMethodStruct.of(hook);</div><div class="line"></div><div class="line">    byte[] originClassData = dvmOriginMethod.clazz.read();</div><div class="line">    byte[] originInsnsData = dvmOriginMethod.insns.read();</div><div class="line">    byte[] originInsSizeData = dvmOriginMethod.insSize.read();</div><div class="line">    byte[] originRegisterSizeData = dvmOriginMethod.registersSize.read();</div><div class="line">    byte[] originAccessFlags = dvmOriginMethod.accessFlags.read();</div><div class="line">    byte[] originNativeFunc = dvmOriginMethod.nativeFunc.read();</div><div class="line"></div><div class="line">    byte[] hookClassData = dvmHookMethod.clazz.read();</div><div class="line">    byte[] hookInsnsData = dvmHookMethod.insns.read();</div><div class="line">    byte[] hookInsSizeData = dvmHookMethod.insSize.read();</div><div class="line">    byte[] hookRegisterSizeData = dvmHookMethod.registersSize.read();</div><div class="line">    byte[] hookAccessFlags = dvmHookMethod.accessFlags.read();</div><div class="line">    byte[] hookNativeFunc = dvmHookMethod.nativeFunc.read();</div><div class="line"></div><div class="line">    dvmOriginMethod.clazz.write(hookClassData);</div><div class="line">    dvmOriginMethod.insns.write(hookInsnsData);</div><div class="line">    dvmOriginMethod.insSize.write(hookInsSizeData);</div><div class="line">    dvmOriginMethod.registersSize.write(hookRegisterSizeData);</div><div class="line">    dvmOriginMethod.accessFlags.write(hookAccessFlags);</div><div class="line"></div><div class="line">    ByteBuffer byteBuffer = ByteBuffer.allocate(DVM_HOOK_INFO_SIZE);</div><div class="line">    byteBuffer.put(originClassData);</div><div class="line">    byteBuffer.put(originInsnsData);</div><div class="line">    byteBuffer.put(originInsSizeData);</div><div class="line">    byteBuffer.put(originRegisterSizeData);</div><div class="line">    byteBuffer.put(originAccessFlags);</div><div class="line">    byteBuffer.put(originNativeFunc);</div><div class="line">    //May leak</div><div class="line">    long memoryAddress = Memory.alloc(DVM_HOOK_INFO_SIZE);</div><div class="line">    Memory.write(memoryAddress, byteBuffer.array());</div><div class="line">    dvmOriginMethod.nativeFunc.write(memoryAddress);</div><div class="line">    return origin;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>分析完<code>Art</code>模式，<code>Dalvik</code>下的就不难看懂的，<code>DalvikMethodStruct.of()</code>会返回<code>DalvikMethodStruct</code>类型结构体，它是<code>Dalvik</code>虚拟机内部<code>DalvikMethod</code>结构体的内线性布局表示。</p>
+<p><code>dvmOriginMethod</code>与<code>dvmHookMethod</code>分别代表原方法与Hook替换的方法，同样的，使用底层内存的写操作，对所有需要替换的字段进行替换。</p>
+<p>最后就是Hook后的方法调用原方法了，它的代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line">// Legend/legendCore/src/main/java/com/lody/legend/HookManager.java</div><div class="line">public &lt;T&gt; T callSuper(Object who, Object... args) &#123;</div><div class="line">    StackTraceElement[] traceElements = Thread.currentThread().getStackTrace();</div><div class="line">    StackTraceElement currentInvoking = traceElements[3];</div><div class="line">    String invokingClassName = currentInvoking.getClassName();</div><div class="line">    String invokingMethodName = currentInvoking.getMethodName();</div><div class="line">    Map&lt;String,List&lt;Method&gt;&gt; methodNameToBackupMethodsMap = classToBackupMethodsMapping.get(invokingClassName);</div><div class="line">    if (methodNameToBackupMethodsMap != null) &#123;</div><div class="line">        List&lt;Method&gt; methodList = methodNameToBackupMethodsMap.get(invokingMethodName);</div><div class="line">        if (methodList != null) &#123;</div><div class="line">            Method method = matchSimilarMethod(methodList, args);</div><div class="line">            if (method != null) &#123;</div><div class="line">                try &#123;</div><div class="line">                   if (Runtime.isArt()) &#123;</div><div class="line">                       return callSuperArt(method, who, args);</div><div class="line">                   &#125;else &#123;</div><div class="line">                       return callSuperDalvik(method, who, args);</div><div class="line">                   &#125;</div><div class="line">                &#125; catch (Throwable e) &#123;</div><div class="line">                    Logger.e(&quot;[---] Call super method with error : %s, detail message please see the [Logcat :system.err].&quot;, e.getMessage());</div><div class="line">                    e.printStackTrace();</div><div class="line">                &#125;</div><div class="line">            &#125;else &#123;</div><div class="line">                Logger.e(&quot;[---] Super method cannot found in backup map.&quot;);</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    return null;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>这段代码是在之前保存的<code>methodNameToBackupMethodsMap</code>中查找备份的方法，找到后对<code>Art</code>与<code>Dalvik</code>模式分别调用<code>callSuperArt()</code>与<code>callSuperDalvik()</code>，前者比较简单，只是调用方法的<code>invoke()</code>就完事，而<code>Dalvik</code>模式由于没有像<code>Art</code>那样做备份，所以多出了一个字段回替换的操作，完事也是调用的<code>invoke()</code>来执行原方法。</p>
+<h3 id="0x4-一些感想"><a href="#0x4-一些感想" class="headerlink" title="0x4 一些感想"></a>0x4 一些感想</h3><p>分析完上面的代码，可以出来<code>Legend</code>尽管实现了<code>Art</code>与<code>Dalvik</code>双模式下的Hook，但在实际逆向Hook中，还是有一些不足：</p>
+<ol>
+<li>不能Hook字段。在很多应用场景中可能会用到，这里有一个迂回的替代的方案是：在字段较敏感的方法中对方法做Hook，然后在Hook代码中反射操作字段。</li>
+<li>Hook自定义的类加载器加载的类方法。由于反射查找的类的方法列表依赖于类的查找，对于部分自定义<code>ClassLoader</code>的情况，获取<code>Class</code>本身就存在着难度，更别说Hook它的方法了。</li>
+<li>兼容性。只支持4.2到6.0，当然，根据技术原理，从2.3到7.1应该都是可以做到的。</li>
+<li>稳定性。与该框架技术原理类似的还有很多，比较alibaba的<code>AndFix</code>，在系统自定义修改较多的情况下，框加要的稳定性存疑，当然，逆向工程时使用的稳定性远没有做产品要求的高，一些全新思路的Hook修改方案如<code>Tinker</code>可能也是一个不错的选择，留待以后测试了！</li>
+</ol>
+<p>最后，讲完了它的原理，并没有讲如何在逆向工程中使用，这个交给聪明的安全研究人员作为思维发散。</p>
+
+      
+    </div>
+  	
+		<! -- 添加捐赠图标 -->
+<div class ="post-donate">
+    <div id="donate_board" class="donate_bar center">
+        <a id="btn_donate" class="btn_donate" href="javascript:;" title="打赏"></a>
+        <span class="donate_txt">
+           &uarr;<br>
+		   您的支持是作者最大的动力
+        </span>
+        <br>
+      </div>  
+	<div id="donate_guide" class="donate_bar center hidden" >
+		<!-- 支付宝打赏图案 -->
+		<! -- <img src="/images/alipay.png" alt="支付宝打赏">  -->
+		<!-- 微信打赏图案 -->
+		<img src="/images/wxpay.png" alt="微信打赏">  
+    </div>
+	<script type="text/javascript">
+		document.getElementById('btn_donate').onclick = function(){
+			$('#donate_board').addClass('hidden');
+			$('#donate_guide').removeClass('hidden');
+		}
+	</script>
+</div>
+
+  	
+    <footer class="article-footer">
+      <a data-url="https://feicong.github.io/2017/02/12/legend/" data-id="ciz2fo2kj0000hxvj014hmclx" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/macOS软件安全/">macOS软件安全</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2017/02/03/macho-unpack/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Mach-O脱壳技巧一则</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+  <section id="comments">
+    <!-- 多说评论框 start -->
+    <div class="ds-thread" data-thread-key="post-legend" data-title="Android免Root环境下Hook框架Legend原理分析" data-url="https://feicong.github.io/2017/02/12/legend/"></div>
+    <!-- 多说评论框 end -->
+    <!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+    <script type="text/javascript">
+    var duoshuoQuery = {short_name:'feicong'};
+      (function() {
+        var ds = document.createElement('script');
+        ds.type = 'text/javascript';ds.async = true;
+        ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+        ds.charset = 'UTF-8';
+        (document.getElementsByTagName('head')[0] 
+         || document.getElementsByTagName('body')[0]).appendChild(ds);
+      })();
+      </script>
+    <!-- 多说公共JS代码 end -->
+  </section>
+  
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/macOS软件安全/">macOS软件安全</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/macOS软件安全/" style="font-size: 10px;">macOS软件安全</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Arkiv</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/02/">February 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">January 2017</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Siste innlegg</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2017/02/12/legend/">Android免Root环境下Hook框架Legend原理分析</a>
+          </li>
+        
+          <li>
+            <a href="/2017/02/03/macho-unpack/">Mach-O脱壳技巧一则</a>
+          </li>
+        
+          <li>
+            <a href="/2017/01/17/dmg/">DMG文件管理</a>
+          </li>
+        
+          <li>
+            <a href="/2017/01/16/pkg/">PKG安装包的管理与文件格式分析</a>
+          </li>
+        
+          <li>
+            <a href="/2017/01/15/staticlib/">静态库的管理与文件格式分析</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">links</h3>
+      <div class="widget">
+      	<ul>
+        	
+          	<li class='link'><a href='https://ydc1992.github.io'>Ken&#39;s Blog</a></li>
+        	
+      	</ul>
+      </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2017 John Doe<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
